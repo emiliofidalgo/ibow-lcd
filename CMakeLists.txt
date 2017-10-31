@@ -68,3 +68,5 @@ link_directories(${catkin_LIBRARIES}
 ###########
 ## Build ##
 ###########
+
+add_executable(ibow-lcd src/main.cc)
