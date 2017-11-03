@@ -36,8 +36,8 @@ struct LCDetectorParams {
     t(4),
     merge_policy(obindex2::MERGE_POLICY_AND),
     purge_descriptors(true),
-    p(10),
-    nndr(0.7f) {}
+    p(30),
+    nndr(0.8) {}
 
   // Image index params
   unsigned k;  // Branching factor for the image index
@@ -87,7 +87,7 @@ class LCDetector {
  private:
   // Parameters
   unsigned p_;
-  unsigned nndr_;
+  float nndr_;
 
   // Image Index
   std::shared_ptr<obindex2::ImageIndex> index_;

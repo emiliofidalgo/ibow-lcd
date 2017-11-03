@@ -42,7 +42,7 @@ void LCDetector::process(const unsigned image_id,
   // Adding the current image to the queue to be added in the future
   queue_ids_.push(image_id);
   queue_kps_.push(kps);
-  queue_descs_.push(descs.clone());
+  queue_descs_.push(descs);
 
   // Assessing if, at least, p images have arrived
   if (queue_ids_.size() < p_) {
@@ -57,7 +57,7 @@ void LCDetector::process(const unsigned image_id,
   std::vector<cv::KeyPoint> newimg_kps = queue_kps_.front();
   queue_kps_.pop();
 
-  cv::Mat newimg_descs = queue_descs_.front().clone();
+  cv::Mat newimg_descs = queue_descs_.front();
   queue_descs_.pop();
 
   addImage(newimg_id, newimg_kps, newimg_descs);
@@ -77,6 +77,13 @@ void LCDetector::process(const unsigned image_id,
 
   // We look for similar images according to the filtered matches found
   index_->searchImages(descs, matches, &image_matches, true);
+
+  // Showing results
+  for (int j = 0; j < std::min(5, static_cast<int>(image_matches.size()));
+                                                                        j++) {
+    std::cout << "Cand: " << image_matches[j].image_id <<  ", " <<
+                 "Score: " << image_matches[j].score << std::endl;
+  }
 
   // TODO(emilio): Close image is considered a correct loop
   result->status = LC_DETECTED;
@@ -115,7 +122,7 @@ void LCDetector::filterMatches(
 
   // Filtering matches according to the ratio test
   for (unsigned m = 0; m < matches_feats.size(); m++) {
-    if (matches_feats[m][0].distance < matches_feats[m][1].distance * nndr_) {
+    if (matches_feats[m][0].distance <= matches_feats[m][1].distance * nndr_) {
       matches->push_back(matches_feats[m][0]);
     }
   }
