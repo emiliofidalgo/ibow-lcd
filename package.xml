@@ -16,4 +16,8 @@
 
   <run_depend>roscpp</run_depend>
   <run_depend>obindex2</run_depend>
+
+  <export>
+    <cpp lflags="-L${prefix}/lib -Wl,-rpath,${prefix}/lib -llcdetector" cflags="-I${prefix}/include/"/>
+  </export>
 </package>

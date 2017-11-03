@@ -51,9 +51,9 @@ endif()
 # Defining the package
 catkin_package(
     INCLUDE_DIRS include
-    LIBRARIES
+    LIBRARIES lcdetector
     CATKIN_DEPENDS roscpp obindex2
-    DEPENDS obindex2 OpenCV Boost
+    DEPENDS OpenCV Boost
 )
 
 include_directories(include
@@ -61,12 +61,20 @@ include_directories(include
                     ${OpenCV_INCLUDE_DIRS}
                     ${Boost_INCLUDE_DIRS})
 
-link_directories(${catkin_LIBRARIES}
-                 ${OpenCV_LIBRARIES}
-                 ${Boost_LIBRARIES})
+### Targets ###
+# Library
+add_library(lcdetector
+            src/lcdetector.cc)
+target_link_libraries(lcdetector
+                      ${catkin_LIBRARIES}
+                      ${OpenCV_LIBRARIES}
+                      ${Boost_LIBRARIES})
 
-###########
-## Build ##
-###########
-
-add_executable(ibow-lcd src/main.cc)
+# Main / Demo
+add_executable(demo
+               src/main.cc)
+target_link_libraries(demo
+                      lcdetector
+                      ${catkin_LIBRARIES}
+                      ${OpenCV_LIBRARIES}
+                      ${Boost_LIBRARIES})
