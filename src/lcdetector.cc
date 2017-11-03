@@ -35,9 +35,10 @@ LCDetector::LCDetector(const LCDetectorParams& params) {
 
 LCDetector::~LCDetector() {}
 
-LCDetectorResult LCDetector::process(const unsigned image_id,
-                                     const std::vector<cv::KeyPoint>& kps,
-                                     const cv::Mat& descs) {
+void LCDetector::process(const unsigned image_id,
+                         const std::vector<cv::KeyPoint>& kps,
+                         const cv::Mat& descs,
+                         LCDetectorResult* result) {
   // Adding the current image to the queue to be added in the future
   queue_ids_.push(image_id);
   queue_kps_.push(kps);
@@ -45,9 +46,8 @@ LCDetectorResult LCDetector::process(const unsigned image_id,
 
   // Assessing if, at least, p images have arrived
   if (queue_ids_.size() < p_) {
-    LCDetectorResult result;
-    result.status = LC_NOT_ENOUGH_IMAGES;
-    return result;
+    result->status = LC_NOT_ENOUGH_IMAGES;
+    return;
   }
 
   // Adding new hypothesis
@@ -79,12 +79,9 @@ LCDetectorResult LCDetector::process(const unsigned image_id,
   index_->searchImages(descs, matches, &image_matches, true);
 
   // TODO(emilio): Close image is considered a correct loop
-  LCDetectorResult result;
-  result.status = LC_DETECTED;
-  result.query_id = image_id;
-  result.train_id = image_matches[0].image_id;
-
-  return result;
+  result->status = LC_DETECTED;
+  result->query_id = image_id;
+  result->train_id = image_matches[0].image_id;
 }
 
 void LCDetector::addImage(const unsigned image_id,

@@ -73,7 +73,7 @@ int main(int argc, char** argv) {
     detector->compute(img, kps, dscs);
 
     ibow_lcd::LCDetectorResult result;
-    result = lcdet.process(i, kps, dscs);
+    lcdet.process(i, kps, dscs, &result);
 
     // If a loop has been found
     if (result.isLoop()) {

@@ -37,7 +37,7 @@ struct LCDetectorParams {
     merge_policy(obindex2::MERGE_POLICY_AND),
     purge_descriptors(true),
     p(10),
-    nndr(0.8f) {}
+    nndr(0.7f) {}
 
   // Image index params
   unsigned k;  // Branching factor for the image index
@@ -79,9 +79,10 @@ class LCDetector {
   explicit LCDetector(const LCDetectorParams& params);
   virtual ~LCDetector();
 
-  LCDetectorResult process(const unsigned image_id,
-                           const std::vector<cv::KeyPoint>& kps,
-                           const cv::Mat& descs);
+  void process(const unsigned image_id,
+               const std::vector<cv::KeyPoint>& kps,
+               const cv::Mat& descs,
+               LCDetectorResult* result);
 
  private:
   // Parameters
