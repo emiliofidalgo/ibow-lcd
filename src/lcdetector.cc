@@ -31,6 +31,7 @@ LCDetector::LCDetector(const LCDetectorParams& params) {
   // Storing the remaining parameters
   p_ = params.p;
   nndr_ = params.nndr;
+  min_score_ = params.min_score;
 }
 
 LCDetector::~LCDetector() {}
@@ -78,11 +79,16 @@ void LCDetector::process(const unsigned image_id,
   // We look for similar images according to the filtered matches found
   index_->searchImages(descs, matches, &image_matches, true);
 
+  // Filtering the resulting image matchings
+  std::vector<obindex2::ImageMatch> image_matches_filt;
+  filterCandidates(image_matches, &image_matches_filt);
+
+  std::cout << "Total candidates: " << image_matches_filt.size() << std::endl;
+
   // Showing results
-  for (int j = 0; j < std::min(5, static_cast<int>(image_matches.size()));
-                                                                        j++) {
-    std::cout << "Cand: " << image_matches[j].image_id <<  ", " <<
-                 "Score: " << image_matches[j].score << std::endl;
+  for (unsigned j = 0; j < image_matches_filt.size(); j++) {
+    std::cout << "Cand: " << image_matches_filt[j].image_id <<  ", " <<
+                 "Score: " << image_matches_filt[j].score << std::endl;
   }
 
   // TODO(emilio): Close image is considered a correct loop
@@ -124,6 +130,29 @@ void LCDetector::filterMatches(
   for (unsigned m = 0; m < matches_feats.size(); m++) {
     if (matches_feats[m][0].distance <= matches_feats[m][1].distance * nndr_) {
       matches->push_back(matches_feats[m][0]);
+    }
+  }
+}
+
+void LCDetector::filterCandidates(
+      const std::vector<obindex2::ImageMatch>& image_matches,
+      std::vector<obindex2::ImageMatch>* image_matches_filt) {
+  image_matches_filt->clear();
+
+  double max_score = image_matches[0].score;
+  double min_score = image_matches[image_matches.size() - 1].score;
+
+  for (unsigned i = 0; i < image_matches.size(); i++) {
+    // Computing the new score
+    double new_score = (image_matches[i].score - min_score) /
+                       (max_score - min_score);
+    // Assessing if this image match is higher than a threshold
+    if (new_score > min_score_) {
+      obindex2::ImageMatch match = image_matches[i];
+      match.score = new_score;
+      image_matches_filt->push_back(match);
+    } else {
+      break;
     }
   }
 }

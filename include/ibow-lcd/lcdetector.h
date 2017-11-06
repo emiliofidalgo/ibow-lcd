@@ -36,8 +36,9 @@ struct LCDetectorParams {
     t(4),
     merge_policy(obindex2::MERGE_POLICY_AND),
     purge_descriptors(true),
-    p(30),
-    nndr(0.8) {}
+    p(50),
+    nndr(0.8),
+    min_score(0.03) {}
 
   // Image index params
   unsigned k;  // Branching factor for the image index
@@ -49,6 +50,7 @@ struct LCDetectorParams {
   // Loop Closure Params
   unsigned p;  // Previous images to be discarded when searching for a loop
   float nndr;  // Nearest neighbour distance ratio
+  double min_score;  // Min score to consider an image matching as correct
 };
 
 // LCDetectorStatus
@@ -88,6 +90,7 @@ class LCDetector {
   // Parameters
   unsigned p_;
   float nndr_;
+  double min_score_;
 
   // Image Index
   std::shared_ptr<obindex2::ImageIndex> index_;
@@ -103,6 +106,9 @@ class LCDetector {
   void filterMatches(
       const std::vector<std::vector<cv::DMatch> >& matches_feats,
       std::vector<cv::DMatch>* matches);
+  void filterCandidates(
+      const std::vector<obindex2::ImageMatch>& image_matches,
+      std::vector<obindex2::ImageMatch>* image_matches_filt);
 };
 
 }  // namespace ibow_lcd
