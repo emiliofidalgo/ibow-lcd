@@ -32,6 +32,8 @@ LCDetector::LCDetector(const LCDetectorParams& params) {
   p_ = params.p;
   nndr_ = params.nndr;
   min_score_ = params.min_score;
+  island_size_ = params.island_size;
+  island_offset_ = island_size_ / 2;
 }
 
 LCDetector::~LCDetector() {}
@@ -83,12 +85,12 @@ void LCDetector::process(const unsigned image_id,
   std::vector<obindex2::ImageMatch> image_matches_filt;
   filterCandidates(image_matches, &image_matches_filt);
 
-  std::cout << "Total candidates: " << image_matches_filt.size() << std::endl;
+  std::vector<Island> islands;
+  buildIslands(image_matches_filt, &islands);
 
-  // Showing results
-  for (unsigned j = 0; j < image_matches_filt.size(); j++) {
-    std::cout << "Cand: " << image_matches_filt[j].image_id <<  ", " <<
-                 "Score: " << image_matches_filt[j].score << std::endl;
+  std::cout << "Resulting Islands:" << std::endl;
+  for (unsigned i = 0; i < islands.size(); i++) {
+    std::cout << islands[i].toString();
   }
 
   // TODO(emilio): Close image is considered a correct loop
@@ -155,6 +157,52 @@ void LCDetector::filterCandidates(
       break;
     }
   }
+}
+
+void LCDetector::buildIslands(
+      const std::vector<obindex2::ImageMatch>& image_matches,
+      std::vector<Island>* islands) {
+  islands->clear();
+
+  // We process each of the resulting image matchings
+  for (unsigned i = 0; i < image_matches.size(); i++) {
+    // Getting information about this match
+    unsigned curr_img_id = static_cast<unsigned>(image_matches[i].image_id);
+    double curr_score = image_matches[i].score;
+
+    // Theoretical island limits
+    unsigned min_id = curr_img_id - island_offset_;
+    unsigned max_id = curr_img_id + island_offset_;
+
+    // We search for the closest island
+    bool found = false;
+    for (unsigned j = 0; j < islands->size(); j++) {
+      if (islands->at(j).fits(curr_img_id)) {
+        islands->at(j).incrementScore(curr_score);
+        found = true;
+        break;
+      } else {
+        // We adjust the limits of a future island
+        islands->at(j).adjustLimits(curr_img_id, &min_id, &max_id);
+      }
+    }
+
+    // Creating a new island if required
+    if (!found) {
+      Island new_island(curr_img_id,
+                        curr_score,
+                        min_id,
+                        max_id);
+      islands->push_back(new_island);
+    }
+  }
+
+  // Normalizing the final scores according to the number of images
+  for (unsigned j = 0; j < islands->size(); j++) {
+    islands->at(j).normalizeScore();
+  }
+
+  std::sort(islands->begin(), islands->end());
 }
 
 }  // namespace ibow_lcd
