@@ -92,8 +92,6 @@ void LCDetector::process(const unsigned image_id,
   std::vector<Island> islands;
   buildIslands(image_matches_filt, &islands);
 
-  std::cout << "------------- Total Islands: " << islands.size() << std::endl;
-
   // std::cout << "Resulting Islands:" << std::endl;
   // for (unsigned i = 0; i < islands.size(); i++) {
   //   std::cout << islands[i].toString();
