@@ -75,9 +75,29 @@ int main(int argc, char** argv) {
     ibow_lcd::LCDetectorResult result;
     lcdet.process(i, kps, dscs, &result);
 
-    // If a loop has been found
-    if (result.isLoop()) {
-      std::cout << "Loop detected: " << result.train_id << std::endl;
+    switch (result.status) {
+      case ibow_lcd::LC_DETECTED:
+        std::cout << "--- Loop detected!!!: " << result.train_id <<
+                     " with " << result.inliers << " inliers" << std::endl;
+        break;
+      case ibow_lcd::LC_NOT_DETECTED:
+        std::cout << "No loop found" << std::endl;
+        break;
+      case ibow_lcd::LC_NOT_ENOUGH_IMAGES:
+        std::cout << "Not enough images to found a loop" << std::endl;
+        break;
+      case ibow_lcd::LC_NOT_ENOUGH_ISLANDS:
+        std::cout << "Not enough islands to found a loop" << std::endl;
+        break;
+      case ibow_lcd::LC_NOT_ENOUGH_INLIERS:
+        std::cout << "Not enough inliers" << std::endl;
+        break;
+      case ibow_lcd::LC_TRANSITION:
+        std::cout << "Transitional loop closure" << std::endl;
+        break;
+      default:
+        std::cout << "No status information" << std::endl;
+        break;
     }
   }
 

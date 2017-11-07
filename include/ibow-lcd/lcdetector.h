@@ -54,6 +54,15 @@ struct Island {
     return response;
   }
 
+  bool overlaps(const Island& island) const {
+    unsigned a1 = min_img_id;
+    unsigned a2 = max_img_id;
+    unsigned b1 = island.min_img_id;
+    unsigned b2 = island.max_img_id;
+
+    return (b1 <= a1 && a1 <= b2) || (a1 <= b1 && b1 <= a2);
+  }
+
   void adjustLimits(const unsigned image_id, unsigned* min, unsigned* max) {
     // If the image is to the right of the island
     if (image_id > max_img_id) {
@@ -97,9 +106,10 @@ struct LCDetectorParams {
     k(16),
     s(150),
     t(4),
-    merge_policy(obindex2::MERGE_POLICY_AND),
+    merge_policy(obindex2::MERGE_POLICY_NONE),
     purge_descriptors(true),
-    p(50),
+    min_feat_apps(4),
+    p(150),
     nndr(0.8),
     min_score(0.03),
     island_size(7) {}
@@ -109,7 +119,8 @@ struct LCDetectorParams {
   unsigned s;  // Maximum leaf size for the image index
   unsigned t;  // Number of trees to search in parallel
   obindex2::MergePolicy merge_policy;  // Merging policy
-  bool purge_descriptors;
+  bool purge_descriptors;  // Delete descriptors from index?
+  unsigned min_feat_apps;  // Min apps of a feature to be a visual word
 
   // Loop Closure Params
   unsigned p;  // Previous images to be discarded when searching for a loop
@@ -122,7 +133,10 @@ struct LCDetectorParams {
 enum LCDetectorStatus {
   LC_DETECTED,
   LC_NOT_DETECTED,
-  LC_NOT_ENOUGH_IMAGES
+  LC_NOT_ENOUGH_IMAGES,
+  LC_NOT_ENOUGH_ISLANDS,
+  LC_NOT_ENOUGH_INLIERS,
+  LC_TRANSITION
 };
 
 // LCDetectorResult
@@ -139,6 +153,7 @@ struct LCDetectorResult {
   LCDetectorStatus status;
   unsigned query_id;
   unsigned train_id;
+  unsigned inliers;
 };
 
 class LCDetector {
@@ -158,6 +173,10 @@ class LCDetector {
   double min_score_;
   unsigned island_size_;
   unsigned island_offset_;
+
+  // Last loop closure detected
+  LCDetectorResult last_lc_result_;
+  Island last_lc_island_;
 
   // Image Index
   std::shared_ptr<obindex2::ImageIndex> index_;
@@ -179,6 +198,13 @@ class LCDetector {
   void buildIslands(
       const std::vector<obindex2::ImageMatch>& image_matches,
       std::vector<Island>* islands);
+  void getPriorIslands(
+      const Island& island,
+      const std::vector<Island>& islands,
+      std::vector<Island>* p_islands);
+  unsigned checkEpipolarGeometry(
+      const std::vector<cv::Point2f>& query,
+      const std::vector<cv::Point2f>& train);
 };
 
 }  // namespace ibow_lcd

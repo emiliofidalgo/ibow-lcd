@@ -21,19 +21,22 @@
 
 namespace ibow_lcd {
 
-LCDetector::LCDetector(const LCDetectorParams& params) {
+LCDetector::LCDetector(const LCDetectorParams& params) :
+      last_lc_island_(-1, 0.0, -1, -1) {
   // Creating the image index
   index_ = std::make_shared<obindex2::ImageIndex>(params.k,
                                                   params.s,
                                                   params.t,
                                                   params.merge_policy,
-                                                  params.purge_descriptors);
+                                                  params.purge_descriptors,
+                                                  params.min_feat_apps);
   // Storing the remaining parameters
   p_ = params.p;
   nndr_ = params.nndr;
   min_score_ = params.min_score;
   island_size_ = params.island_size;
   island_offset_ = island_size_ / 2;
+  last_lc_result_.status = LC_NOT_DETECTED;
 }
 
 LCDetector::~LCDetector() {}
@@ -50,6 +53,7 @@ void LCDetector::process(const unsigned image_id,
   // Assessing if, at least, p images have arrived
   if (queue_ids_.size() < p_) {
     result->status = LC_NOT_ENOUGH_IMAGES;
+    last_lc_result_.status = LC_NOT_ENOUGH_IMAGES;
     return;
   }
 
@@ -88,15 +92,92 @@ void LCDetector::process(const unsigned image_id,
   std::vector<Island> islands;
   buildIslands(image_matches_filt, &islands);
 
-  std::cout << "Resulting Islands:" << std::endl;
-  for (unsigned i = 0; i < islands.size(); i++) {
-    std::cout << islands[i].toString();
+  std::cout << "------------- Total Islands: " << islands.size() << std::endl;
+
+  // std::cout << "Resulting Islands:" << std::endl;
+  // for (unsigned i = 0; i < islands.size(); i++) {
+  //   std::cout << islands[i].toString();
+  // }
+
+  if (!islands.size()) {
+    // No resulting islands
+    result->status = LC_NOT_ENOUGH_ISLANDS;
+    last_lc_result_.status = LC_NOT_ENOUGH_ISLANDS;
+    return;
   }
 
-  // TODO(emilio): Close image is considered a correct loop
-  result->status = LC_DETECTED;
-  result->query_id = image_id;
-  result->train_id = image_matches[0].image_id;
+  // We process the resulting islands according to the previous detections
+  if (last_lc_result_.status != LC_DETECTED &&
+      last_lc_result_.status != LC_TRANSITION) {
+    // We get the best island and try to close a loop with the best image inside
+    Island best_island = islands[0];
+    unsigned best_img = best_island.img_id;
+
+    // We obtain the image matchings, since we need them for compute F
+    std::unordered_map<unsigned, obindex2::PointMatches> point_matches;
+    index_->getMatchings(kps, matches, &point_matches);
+    obindex2::PointMatches p_matches = point_matches[best_img];
+
+    unsigned inliers = checkEpipolarGeometry(p_matches.query, p_matches.train);
+
+    if (inliers > 12) {
+      // LOOP detected
+      result->status = LC_DETECTED;
+      result->query_id = image_id;
+      result->train_id = best_img;
+      result->inliers = inliers;
+      last_lc_island_ = best_island;
+      // Store the last result
+      last_lc_result_ = *result;
+    } else {
+      result->status = LC_NOT_ENOUGH_INLIERS;
+      last_lc_result_.status = LC_NOT_ENOUGH_INLIERS;
+    }
+  } else {
+    // We search for islands similar to the previous one
+    std::vector<Island> p_islands;
+    getPriorIslands(last_lc_island_, islands, &p_islands);
+
+    // We obtain the image matchings, since we need them for compute F
+    std::unordered_map<unsigned, obindex2::PointMatches> point_matches;
+    index_->getMatchings(kps, matches, &point_matches);
+
+    // We validate the epipolar geometry against each prior island
+    bool found = false;
+    for (unsigned i = 0; i < p_islands.size(); i++) {
+      Island island = p_islands[i];
+      unsigned best_img = island.img_id;
+
+      // Getting the corresponding matchings
+      obindex2::PointMatches p_matches = point_matches[best_img];
+
+      unsigned inliers = checkEpipolarGeometry(p_matches.query,
+                                               p_matches.train);
+
+      if (inliers > 12) {
+        // LOOP detected
+        result->status = LC_DETECTED;
+        result->query_id = image_id;
+        result->train_id = best_img;
+        result->inliers = inliers;
+        last_lc_island_ = island;
+        found = true;
+        // Store the last result
+        last_lc_result_ = *result;
+        break;
+      }
+    }
+
+    if (!found) {
+      if (image_id - last_lc_result_.query_id > 5) {
+        result->status = LC_NOT_DETECTED;
+        last_lc_result_.status = LC_NOT_DETECTED;
+      } else {
+        result->status = LC_TRANSITION;
+        last_lc_result_.status = LC_TRANSITION;
+      }
+    }
+  }
 }
 
 void LCDetector::addImage(const unsigned image_id,
@@ -171,7 +252,9 @@ void LCDetector::buildIslands(
     double curr_score = image_matches[i].score;
 
     // Theoretical island limits
-    unsigned min_id = curr_img_id - island_offset_;
+    unsigned min_id = static_cast<unsigned>
+                              (std::max((int)curr_img_id - (int)island_offset_,
+                               0));
     unsigned max_id = curr_img_id + island_offset_;
 
     // We search for the closest island
@@ -203,6 +286,46 @@ void LCDetector::buildIslands(
   }
 
   std::sort(islands->begin(), islands->end());
+}
+
+void LCDetector::getPriorIslands(
+      const Island& island,
+      const std::vector<Island>& islands,
+      std::vector<Island>* p_islands) {
+  p_islands->clear();
+
+  // We search for overlapping islands
+  for (unsigned i = 0; i < islands.size(); i++) {
+    Island tisl = islands[i];
+    if (island.overlaps(tisl)) {
+      p_islands->push_back(tisl);
+    }
+  }
+}
+
+unsigned LCDetector::checkEpipolarGeometry(
+                                      const std::vector<cv::Point2f>& query,
+                                      const std::vector<cv::Point2f>& train) {
+  std::vector<uchar> inliers(query.size(), 0);
+  if (query.size() > 7) {
+    cv::Mat F =
+      cv::findFundamentalMat(
+        cv::Mat(query), cv::Mat(train),      // Matching points
+        CV_FM_RANSAC,                        // RANSAC method
+        3.0,                                 // Distance to epipolar line
+        0.985,                               // Confidence probability
+        inliers);                            // Match status (inlier or outlier)
+  }
+
+  // Extract the surviving (inliers) matches
+  auto it = inliers.begin();
+  unsigned total_inliers = 0;
+  for (; it != inliers.end(); it++) {
+    if (*it)
+      total_inliers++;
+  }
+
+  return total_inliers;
 }
 
 }  // namespace ibow_lcd
