@@ -36,6 +36,7 @@ LCDetector::LCDetector(const LCDetectorParams& params) :
   min_score_ = params.min_score;
   island_size_ = params.island_size;
   island_offset_ = island_size_ / 2;
+  min_inliers_ = params.min_inliers;
   last_lc_result_.status = LC_NOT_DETECTED;
 }
 
@@ -118,7 +119,7 @@ void LCDetector::process(const unsigned image_id,
 
     unsigned inliers = checkEpipolarGeometry(p_matches.query, p_matches.train);
 
-    if (inliers > 12) {
+    if (inliers > min_inliers_) {
       // LOOP detected
       result->status = LC_DETECTED;
       result->query_id = image_id;
@@ -152,7 +153,7 @@ void LCDetector::process(const unsigned image_id,
       unsigned inliers = checkEpipolarGeometry(p_matches.query,
                                                p_matches.train);
 
-      if (inliers > 12) {
+      if (inliers > min_inliers_) {
         // LOOP detected
         result->status = LC_DETECTED;
         result->query_id = image_id;
