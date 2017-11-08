@@ -113,7 +113,8 @@ struct LCDetectorParams {
     nndr(0.8),
     min_score(0.03),
     island_size(7),
-    min_inliers(15) {}
+    min_inliers(15),
+    nframes_after_lc(5) {}
 
   // Image index params
   unsigned k;  // Branching factor for the image index
@@ -129,6 +130,7 @@ struct LCDetectorParams {
   double min_score;  // Min score to consider an image matching as correct
   unsigned island_size;  // Max number of images of an island
   unsigned min_inliers;  // Minimum number of inliers to consider a loop
+  unsigned nframes_after_lc;  // Number of frames after a lc to wait for new lc
 };
 
 // LCDetectorStatus
@@ -176,6 +178,7 @@ class LCDetector {
   unsigned island_size_;
   unsigned island_offset_;
   unsigned min_inliers_;
+  unsigned nframes_after_lc_;
 
   // Last loop closure detected
   LCDetectorResult last_lc_result_;

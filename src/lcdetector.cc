@@ -37,6 +37,7 @@ LCDetector::LCDetector(const LCDetectorParams& params) :
   island_size_ = params.island_size;
   island_offset_ = island_size_ / 2;
   min_inliers_ = params.min_inliers;
+  nframes_after_lc_ = params.nframes_after_lc;
   last_lc_result_.status = LC_NOT_DETECTED;
 }
 
@@ -168,7 +169,7 @@ void LCDetector::process(const unsigned image_id,
     }
 
     if (!found) {
-      if (image_id - last_lc_result_.query_id > 5) {
+      if (image_id - last_lc_result_.query_id > nframes_after_lc_) {
         result->status = LC_NOT_DETECTED;
         last_lc_result_.status = LC_NOT_DETECTED;
       } else {
