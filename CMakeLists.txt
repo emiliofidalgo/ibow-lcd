@@ -50,16 +50,22 @@ endif()
 
 # Defining the package
 catkin_package(
-    INCLUDE_DIRS include
+    INCLUDE_DIRS include external
     LIBRARIES lcdetector
     CATKIN_DEPENDS roscpp obindex2
     DEPENDS OpenCV Boost
 )
 
 include_directories(include
+                    external
                     ${catkin_INCLUDE_DIRS}
                     ${OpenCV_INCLUDE_DIRS}
                     ${Boost_INCLUDE_DIRS})
+
+# Copy test images to the binary directory
+file(GLOB JSON "evaluation/*.json")
+file(COPY ${JSON}
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 ### Targets ###
 # Library
@@ -74,6 +80,16 @@ target_link_libraries(lcdetector
 add_executable(demo
                src/main.cc)
 target_link_libraries(demo
+                      lcdetector
+                      ${catkin_LIBRARIES}
+                      ${OpenCV_LIBRARIES}
+                      ${Boost_LIBRARIES})
+
+# Evaluation
+add_executable(evaluator
+               evaluation/lcevaluator.cc
+               evaluation/main.cc)
+target_link_libraries(evaluator
                       lcdetector
                       ${catkin_LIBRARIES}
                       ${OpenCV_LIBRARIES}

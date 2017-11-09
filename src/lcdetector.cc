@@ -47,6 +47,8 @@ void LCDetector::process(const unsigned image_id,
                          const std::vector<cv::KeyPoint>& kps,
                          const cv::Mat& descs,
                          LCDetectorResult* result) {
+  result->query_id = image_id;
+
   // Adding the current image to the queue to be added in the future
   queue_ids_.push(image_id);
   queue_kps_.push(kps);
