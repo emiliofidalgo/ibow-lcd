@@ -1,0 +1,79 @@
+{
+  "config_name": "CityCentre_2",
+  "base_dir": "/datasets/CityCentre/",
+  "results_dir": "/home/emilio/Escritorio/ibow-lcd/",
+  "executions" : [
+    {
+      "purge_descriptors": true,
+      "min_feat_apps": 2,
+      "p": 150,
+      "min_score": 0.3,
+      "island_size": 10,
+      "min_inliers": 15,
+      "nframes_after_lc": 1
+    },
+    {
+      "purge_descriptors": true,
+      "min_feat_apps": 2,
+      "p": 150,
+      "min_score": 0.3,
+      "island_size": 10,
+      "min_inliers": 15,
+      "nframes_after_lc": 2
+    },
+    {
+      "purge_descriptors": true,
+      "min_feat_apps": 2,
+      "p": 150,
+      "min_score": 0.3,
+      "island_size": 10,
+      "min_inliers": 15,
+      "nframes_after_lc": 3
+    },
+    {
+      "purge_descriptors": true,
+      "min_feat_apps": 2,
+      "p": 150,
+      "min_score": 0.3,
+      "island_size": 10,
+      "min_inliers": 15,
+      "nframes_after_lc": 4
+    },
+    {
+      "purge_descriptors": true,
+      "min_feat_apps": 2,
+      "p": 150,
+      "min_score": 0.3,
+      "island_size": 10,
+      "min_inliers": 15,
+      "nframes_after_lc": 5
+    },
+    {
+      "purge_descriptors": true,
+      "min_feat_apps": 2,
+      "p": 150,
+      "min_score": 0.3,
+      "island_size": 10,
+      "min_inliers": 15,
+      "nframes_after_lc": 6
+    },
+    {
+      "purge_descriptors": true,
+      "min_feat_apps": 2,
+      "p": 150,
+      "min_score": 0.3,
+      "island_size": 10,
+      "min_inliers": 15,
+      "nframes_after_lc": 7
+    },
+    {
+      "purge_descriptors": true,
+      "min_feat_apps": 2,
+      "p": 150,
+      "min_score": 0.3,
+      "island_size": 10,
+      "min_inliers": 15,
+      "nframes_after_lc": 8
+    }
+  ]
+}
