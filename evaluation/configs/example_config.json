@@ -4,11 +4,11 @@
   "results_dir": "/home/emilio/Escritorio/ibow-lcd/",
   "executions" : [
     {
-      "purge_descriptors": true,
+      "purge_descriptors": false,
       "min_feat_apps": 2,
-      "p": 150,
+      "p": 250,
       "min_score": 0.3,
-      "island_size": 10,
+      "island_size": 11,
       "min_inliers": 15,
       "nframes_after_lc": 3
     }
