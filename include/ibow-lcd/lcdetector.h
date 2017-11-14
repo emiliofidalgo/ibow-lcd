@@ -108,13 +108,13 @@ struct LCDetectorParams {
     t(4),
     merge_policy(obindex2::MERGE_POLICY_NONE),
     purge_descriptors(true),
-    min_feat_apps(4),
-    p(150),
+    min_feat_apps(2),
+    p(250),
     nndr(0.8),
-    min_score(0.03),
-    island_size(7),
+    min_score(0.3),
+    island_size(11),
     min_inliers(15),
-    nframes_after_lc(5) {}
+    nframes_after_lc(3) {}
 
   // Image index params
   unsigned k;  // Branching factor for the image index

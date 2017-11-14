@@ -48,7 +48,7 @@ void getFilenames(const std::string& directory,
 
 int main(int argc, char** argv) {
   // Creating feature detector and descriptor
-  cv::Ptr<cv::Feature2D> detector = cv::ORB::create(1000);  // Default params
+  cv::Ptr<cv::Feature2D> detector = cv::ORB::create(750);  // Default params
 
   // Loading image filenames
   std::vector<std::string> filenames;
@@ -68,7 +68,6 @@ int main(int argc, char** argv) {
     cv::Mat img = cv::imread(filenames[i]);
     std::vector<cv::KeyPoint> kps;
     detector->detect(img, kps);
-    cv::KeyPointsFilter::retainBest(kps, 500);
     cv::Mat dscs;
     detector->compute(img, kps, dscs);
 
