@@ -51,10 +51,12 @@ void LCDetector::process(const unsigned image_id,
                          LCDetectorResult* result) {
   result->query_id = image_id;
 
+  // Storing the keypoints and descriptors
+  prev_kps_.push_back(kps);
+  prev_descs_.push_back(descs);
+
   // Adding the current image to the queue to be added in the future
   queue_ids_.push(image_id);
-  queue_kps_.push(kps);
-  queue_descs_.push(descs);
 
   // Assessing if, at least, p images have arrived
   if (queue_ids_.size() < p_) {
@@ -67,16 +69,7 @@ void LCDetector::process(const unsigned image_id,
   unsigned newimg_id = queue_ids_.front();
   queue_ids_.pop();
 
-  std::vector<cv::KeyPoint> newimg_kps = queue_kps_.front();
-  queue_kps_.pop();
-
-  cv::Mat newimg_descs = queue_descs_.front();
-  queue_descs_.pop();
-
-  addImage(newimg_id, newimg_kps, newimg_descs);
-
-  prev_kps_.push_back(newimg_kps);
-  prev_descs_.push_back(newimg_descs);
+  addImage(newimg_id, prev_kps_[newimg_id], prev_descs_[newimg_id]);
 
   // Searching similar images in the index
   // Matching the descriptors agains the current visual words

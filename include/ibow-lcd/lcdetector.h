@@ -113,7 +113,7 @@ struct LCDetectorParams {
     nndr(0.8),
     min_score(0.3),
     island_size(11),
-    min_inliers(15),
+    min_inliers(25),
     nframes_after_lc(3),
     min_consecutive_loops(4) {}
 
