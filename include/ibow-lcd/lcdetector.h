@@ -183,6 +183,7 @@ class LCDetector {
   // Last loop closure detected
   LCDetectorResult last_lc_result_;
   Island last_lc_island_;
+  int consecutive_loops_;
 
   // Image Index
   std::shared_ptr<obindex2::ImageIndex> index_;
@@ -191,6 +192,9 @@ class LCDetector {
   std::queue<unsigned> queue_ids_;
   std::queue<std::vector<cv::KeyPoint> > queue_kps_;
   std::queue<cv::Mat> queue_descs_;
+
+  std::vector<std::vector<cv::KeyPoint> > prev_kps_;
+  std::vector<cv::Mat> prev_descs_;
 
   void addImage(const unsigned image_id,
                 const std::vector<cv::KeyPoint>& kps,
@@ -211,6 +215,14 @@ class LCDetector {
   unsigned checkEpipolarGeometry(
       const std::vector<cv::Point2f>& query,
       const std::vector<cv::Point2f>& train);
+  void ratioMatchingBF(const cv::Mat& query,
+                     const cv::Mat& train,
+                     std::vector<cv::DMatch>* matches);
+  void convertPoints(const std::vector<cv::KeyPoint>& query_kps,
+                     const std::vector<cv::KeyPoint>& train_kps,
+                     const std::vector<cv::DMatch>& matches,
+                     std::vector<cv::Point2f>* query,
+                     std::vector<cv::Point2f>* train);
 };
 
 }  // namespace ibow_lcd

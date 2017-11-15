@@ -39,6 +39,7 @@ LCDetector::LCDetector(const LCDetectorParams& params) :
   min_inliers_ = params.min_inliers;
   nframes_after_lc_ = params.nframes_after_lc;
   last_lc_result_.status = LC_NOT_DETECTED;
+  consecutive_loops_ = 0;
 }
 
 LCDetector::~LCDetector() {}
@@ -72,6 +73,9 @@ void LCDetector::process(const unsigned image_id,
   queue_descs_.pop();
 
   addImage(newimg_id, newimg_kps, newimg_descs);
+
+  prev_kps_.push_back(newimg_kps);
+  prev_descs_.push_back(newimg_descs);
 
   // Searching similar images in the index
   // Matching the descriptors agains the current visual words
@@ -116,11 +120,20 @@ void LCDetector::process(const unsigned image_id,
     unsigned best_img = best_island.img_id;
 
     // We obtain the image matchings, since we need them for compute F
-    std::unordered_map<unsigned, obindex2::PointMatches> point_matches;
-    index_->getMatchings(kps, matches, &point_matches);
-    obindex2::PointMatches p_matches = point_matches[best_img];
+    // std::unordered_map<unsigned, obindex2::PointMatches> point_matches;
+    // index_->getMatchings(kps, matches, &point_matches);
+    // obindex2::PointMatches p_matches = point_matches[best_img];
+    //
+    // unsigned inliers = checkEpipolarGeometry(p_matches.query,
+    // p_matches.train);
 
-    unsigned inliers = checkEpipolarGeometry(p_matches.query, p_matches.train);
+    // We obtain the image matchings, since we need them for compute F
+    std::vector<cv::DMatch> tmatches;
+    std::vector<cv::Point2f> tquery;
+    std::vector<cv::Point2f> ttrain;
+    ratioMatchingBF(descs, prev_descs_[best_img], &tmatches);
+    convertPoints(kps, prev_kps_[best_img], tmatches, &tquery, &ttrain);
+    unsigned inliers = checkEpipolarGeometry(tquery, ttrain);
 
     if (inliers > min_inliers_) {
       // LOOP detected
@@ -131,6 +144,7 @@ void LCDetector::process(const unsigned image_id,
       last_lc_island_ = best_island;
       // Store the last result
       last_lc_result_ = *result;
+      consecutive_loops_ = 1;
     } else {
       result->status = LC_NOT_ENOUGH_INLIERS;
       last_lc_result_.status = LC_NOT_ENOUGH_INLIERS;
@@ -140,9 +154,24 @@ void LCDetector::process(const unsigned image_id,
     std::vector<Island> p_islands;
     getPriorIslands(last_lc_island_, islands, &p_islands);
 
+    if (p_islands.size() && consecutive_loops_ > 3) {
+      // LOOP detected assumed
+      result->status = LC_DETECTED;
+      result->query_id = image_id;
+      result->train_id = p_islands[0].img_id;
+      result->inliers = 0;
+      last_lc_island_ = p_islands[0];
+
+      consecutive_loops_++;
+
+      // Store the last result
+      last_lc_result_ = *result;
+      return;
+    }
+
     // We obtain the image matchings, since we need them for compute F
-    std::unordered_map<unsigned, obindex2::PointMatches> point_matches;
-    index_->getMatchings(kps, matches, &point_matches);
+    // std::unordered_map<unsigned, obindex2::PointMatches> point_matches;
+    // index_->getMatchings(kps, matches, &point_matches);
 
     // We validate the epipolar geometry against each prior island
     bool found = false;
@@ -151,10 +180,18 @@ void LCDetector::process(const unsigned image_id,
       unsigned best_img = island.img_id;
 
       // Getting the corresponding matchings
-      obindex2::PointMatches p_matches = point_matches[best_img];
+      // obindex2::PointMatches p_matches = point_matches[best_img];
 
-      unsigned inliers = checkEpipolarGeometry(p_matches.query,
-                                               p_matches.train);
+      // unsigned inliers = checkEpipolarGeometry(p_matches.query,
+      //                                          p_matches.train);
+
+      // We obtain the image matchings, since we need them for compute F
+      std::vector<cv::DMatch> tmatches;
+      std::vector<cv::Point2f> tquery;
+      std::vector<cv::Point2f> ttrain;
+      ratioMatchingBF(descs, prev_descs_[best_img], &tmatches);
+      convertPoints(kps, prev_kps_[best_img], tmatches, &tquery, &ttrain);
+      unsigned inliers = checkEpipolarGeometry(tquery, ttrain);
 
       if (inliers > min_inliers_) {
         // LOOP detected
@@ -166,6 +203,7 @@ void LCDetector::process(const unsigned image_id,
         found = true;
         // Store the last result
         last_lc_result_ = *result;
+        consecutive_loops_++;
         break;
       }
     }
@@ -178,6 +216,8 @@ void LCDetector::process(const unsigned image_id,
         result->status = LC_TRANSITION;
         last_lc_result_.status = LC_TRANSITION;
       }
+
+      consecutive_loops_ = 0;
     }
   }
 }
@@ -328,6 +368,44 @@ unsigned LCDetector::checkEpipolarGeometry(
   }
 
   return total_inliers;
+}
+
+void LCDetector::ratioMatchingBF(const cv::Mat& query,
+                                 const cv::Mat& train,
+                                 std::vector<cv::DMatch>* matches) {
+  matches->clear();
+  cv::BFMatcher matcher(cv::NORM_HAMMING);
+
+  // Matching descriptors
+  std::vector<std::vector<cv::DMatch> > matches12;
+  matcher.knnMatch(query, train, matches12, 2);
+
+  // Filtering the resulting matchings according to the given ratio
+  for (unsigned m = 0; m < matches12.size(); m++) {
+    if (matches12[m][0].distance <= matches12[m][1].distance * nndr_) {
+      matches->push_back(matches12[m][0]);
+    }
+  }
+}
+
+void LCDetector::convertPoints(const std::vector<cv::KeyPoint>& query_kps,
+                               const std::vector<cv::KeyPoint>& train_kps,
+                               const std::vector<cv::DMatch>& matches,
+                               std::vector<cv::Point2f>* query,
+                               std::vector<cv::Point2f>* train) {
+  query->clear();
+  train->clear();
+  for (auto it = matches.begin(); it != matches.end(); it++) {
+    // Get the position of query keypoints
+    float x = query_kps[it->queryIdx].pt.x;
+    float y = query_kps[it->queryIdx].pt.y;
+    query->push_back(cv::Point2f(x, y));
+
+    // Get the position of train keypoints
+    x = train_kps[it->trainIdx].pt.x;
+    y = train_kps[it->trainIdx].pt.y;
+    train->push_back(cv::Point2f(x, y));
+  }
 }
 
 }  // namespace ibow_lcd

@@ -9,7 +9,7 @@
       "p": 250,
       "min_score": 0.3,
       "island_size": 11,
-      "min_inliers": 15,
+      "min_inliers": 25,
       "nframes_after_lc": 3
     }
   ]
