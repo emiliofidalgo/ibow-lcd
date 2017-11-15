@@ -39,6 +39,7 @@ LCDetector::LCDetector(const LCDetectorParams& params) :
   min_inliers_ = params.min_inliers;
   nframes_after_lc_ = params.nframes_after_lc;
   last_lc_result_.status = LC_NOT_DETECTED;
+  min_consecutive_loops_ = params.min_consecutive_loops;
   consecutive_loops_ = 0;
 }
 
@@ -154,7 +155,7 @@ void LCDetector::process(const unsigned image_id,
     std::vector<Island> p_islands;
     getPriorIslands(last_lc_island_, islands, &p_islands);
 
-    if (p_islands.size() && consecutive_loops_ > 3) {
+    if (p_islands.size() && consecutive_loops_ > min_consecutive_loops_) {
       // LOOP detected assumed
       result->status = LC_DETECTED;
       result->query_id = image_id;

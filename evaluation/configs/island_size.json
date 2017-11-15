@@ -10,7 +10,8 @@
       "min_score": 0.3,
       "island_size": 3,
       "min_inliers": 15,
-      "nframes_after_lc": 3
+      "nframes_after_lc": 3,
+      "min_consecutive_loops": 4
     },
     {
       "purge_descriptors": true,
@@ -19,7 +20,8 @@
       "min_score": 0.3,
       "island_size": 5,
       "min_inliers": 15,
-      "nframes_after_lc": 3
+      "nframes_after_lc": 3,
+      "min_consecutive_loops": 4
     },
     {
       "purge_descriptors": true,
@@ -28,7 +30,8 @@
       "min_score": 0.3,
       "island_size": 7,
       "min_inliers": 15,
-      "nframes_after_lc": 3
+      "nframes_after_lc": 3,
+      "min_consecutive_loops": 4
     },
     {
       "purge_descriptors": true,
@@ -37,7 +40,8 @@
       "min_score": 0.3,
       "island_size": 9,
       "min_inliers": 15,
-      "nframes_after_lc": 3
+      "nframes_after_lc": 3,
+      "min_consecutive_loops": 4
     },
     {
       "purge_descriptors": true,
@@ -46,7 +50,8 @@
       "min_score": 0.3,
       "island_size": 11,
       "min_inliers": 15,
-      "nframes_after_lc": 3
+      "nframes_after_lc": 3,
+      "min_consecutive_loops": 4
     },
     {
       "purge_descriptors": true,
@@ -55,7 +60,8 @@
       "min_score": 0.3,
       "island_size": 13,
       "min_inliers": 15,
-      "nframes_after_lc": 3
+      "nframes_after_lc": 3,
+      "min_consecutive_loops": 4
     },
     {
       "purge_descriptors": true,
@@ -64,7 +70,8 @@
       "min_score": 0.3,
       "island_size": 15,
       "min_inliers": 15,
-      "nframes_after_lc": 3
+      "nframes_after_lc": 3,
+      "min_consecutive_loops": 4
     },
     {
       "purge_descriptors": true,
@@ -73,7 +80,8 @@
       "min_score": 0.3,
       "island_size": 17,
       "min_inliers": 15,
-      "nframes_after_lc": 3
+      "nframes_after_lc": 3,
+      "min_consecutive_loops": 4
     },
     {
       "purge_descriptors": true,
@@ -82,7 +90,8 @@
       "min_score": 0.3,
       "island_size": 19,
       "min_inliers": 15,
-      "nframes_after_lc": 3
+      "nframes_after_lc": 3,
+      "min_consecutive_loops": 4
     }
   ]
 }

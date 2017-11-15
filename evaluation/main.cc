@@ -136,6 +136,7 @@ int main(int argc, char** argv) {
     params.island_size = js["executions"][i]["island_size"];
     params.min_inliers = js["executions"][i]["min_inliers"];
     params.nframes_after_lc = js["executions"][i]["nframes_after_lc"];
+    params.min_consecutive_loops = js["executions"][i]["min_consecutive_loops"];
 
     // Configuring the evaluator
     eval.setIndexParams(params);
