@@ -100,7 +100,7 @@ int main(int argc, char** argv) {
   std::vector<cv::Mat> descs;
 
   std::cout << "Describing images ..." << std::endl;
-  cv::Ptr<cv::Feature2D> detector = cv::ORB::create(2000);  // Default params
+  cv::Ptr<cv::Feature2D> detector = cv::ORB::create(1000);  // Default params
 
   // Processing the sequence of images
   for (unsigned i = 0; i < nimages; i++) {
@@ -110,7 +110,6 @@ int main(int argc, char** argv) {
     cv::Mat img = cv::imread(filenames[i]);
     std::vector<cv::KeyPoint> tkps;
     detector->detect(img, tkps);
-    cv::KeyPointsFilter::retainBest(tkps, 1000);
     cv::Mat tdescs;
     detector->compute(img, tkps, tdescs);
 
