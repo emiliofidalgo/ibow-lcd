@@ -1,4 +1,4 @@
-/**
+
 * This file is part of ibow-lcd.
 *
 * Copyright (C) 2017 Emilio Garcia-Fidalgo <emilio.garcia@uib.es> (University of the Balearic Islands)
@@ -147,21 +147,6 @@ void LCDetector::process(const unsigned image_id,
     // We search for islands similar to the previous one
     std::vector<Island> p_islands;
     getPriorIslands(last_lc_island_, islands, &p_islands);
-
-    if (p_islands.size() && consecutive_loops_ > min_consecutive_loops_) {
-      // LOOP detected assumed
-      result->status = LC_DETECTED;
-      result->query_id = image_id;
-      result->train_id = p_islands[0].img_id;
-      result->inliers = 0;
-      last_lc_island_ = p_islands[0];
-
-      consecutive_loops_++;
-
-      // Store the last result
-      last_lc_result_ = *result;
-      return;
-    }
 
     // We obtain the image matchings, since we need them for compute F
     // std::unordered_map<unsigned, obindex2::PointMatches> point_matches;
