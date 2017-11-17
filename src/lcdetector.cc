@@ -1,4 +1,4 @@
-
+/*
 * This file is part of ibow-lcd.
 *
 * Copyright (C) 2017 Emilio Garcia-Fidalgo <emilio.garcia@uib.es> (University of the Balearic Islands)
