@@ -342,8 +342,8 @@ unsigned LCDetector::checkEpipolarGeometry(
       cv::findFundamentalMat(
         cv::Mat(query), cv::Mat(train),      // Matching points
         CV_FM_RANSAC,                        // RANSAC method
-        3.0,                                 // Distance to epipolar line
-        0.985,                               // Confidence probability
+        2.0,                                 // Distance to epipolar line
+        0.99,                                // Confidence probability
         inliers);                            // Match status (inlier or outlier)
   }
 
@@ -370,7 +370,7 @@ void LCDetector::ratioMatchingBF(const cv::Mat& query,
 
   // Filtering the resulting matchings according to the given ratio
   for (unsigned m = 0; m < matches12.size(); m++) {
-    if (matches12[m][0].distance <= matches12[m][1].distance * nndr_) {
+    if (matches12[m][0].distance <= matches12[m][1].distance * 0.6) {
       matches->push_back(matches12[m][0]);
     }
   }
