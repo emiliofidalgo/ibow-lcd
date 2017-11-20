@@ -285,18 +285,9 @@ void LCDetector::buildIslands(
         islands->at(j).incrementScore(curr_score);
         found = true;
         break;
-      } else if (abs(curr_img_id - islands->at(j).max_img_id) <
-                                                              island_offset_) {
-        islands->at(j).incrementScore(curr_score);
-        islands->at(j).max_img_id = max_id;
-        found = true;
-        break;
-      } else if (abs(islands->at(j).min_img_id - curr_img_id) <
-                                                              island_offset_) {
-        islands->at(j).incrementScore(curr_score);
-        islands->at(j).min_img_id = min_id;
-        found = true;
-        break;
+      } else {
+        // We adjust the limits of a future island
+        islands->at(j).adjustLimits(curr_img_id, &min_id, &max_id);
       }
     }
 
@@ -342,7 +333,7 @@ unsigned LCDetector::checkEpipolarGeometry(
       cv::findFundamentalMat(
         cv::Mat(query), cv::Mat(train),      // Matching points
         CV_FM_RANSAC,                        // RANSAC method
-        2.0,                                 // Distance to epipolar line
+        1.0,                                 // Distance to epipolar line
         0.99,                                // Confidence probability
         inliers);                            // Match status (inlier or outlier)
   }
