@@ -154,36 +154,48 @@ void LCDetector::process(const unsigned image_id,
 
     // We validate the epipolar geometry against each prior island
     bool found = false;
-    for (unsigned i = 0; i < p_islands.size(); i++) {
-      Island island = p_islands[i];
-      unsigned best_img = island.img_id;
+    if (p_islands.size()) {
+      std::vector<unsigned> tinliers(p_islands.size(), 0);
+      #pragma omp parallel for
+      for (unsigned i = 0; i < p_islands.size(); i++) {
+        Island island = p_islands[i];
+        unsigned best_img = island.img_id;
 
-      // Getting the corresponding matchings
-      // obindex2::PointMatches p_matches = point_matches[best_img];
+        // Getting the corresponding matchings
+        // obindex2::PointMatches p_matches = point_matches[best_img];
 
-      // unsigned inliers = checkEpipolarGeometry(p_matches.query,
-      //                                          p_matches.train);
+        // unsigned inliers = checkEpipolarGeometry(p_matches.query,
+        //                                          p_matches.train);
 
-      // We obtain the image matchings, since we need them for compute F
-      std::vector<cv::DMatch> tmatches;
-      std::vector<cv::Point2f> tquery;
-      std::vector<cv::Point2f> ttrain;
-      ratioMatchingBF(descs, prev_descs_[best_img], &tmatches);
-      convertPoints(kps, prev_kps_[best_img], tmatches, &tquery, &ttrain);
-      unsigned inliers = checkEpipolarGeometry(tquery, ttrain);
+        // We obtain the image matchings, since we need them for compute F
+        std::vector<cv::DMatch> tmatches;
+        std::vector<cv::Point2f> tquery;
+        std::vector<cv::Point2f> ttrain;
+        ratioMatchingBF(descs, prev_descs_[best_img], &tmatches);
+        convertPoints(kps, prev_kps_[best_img], tmatches, &tquery, &ttrain);
+        tinliers[i] = checkEpipolarGeometry(tquery, ttrain);
+      }
+
+      unsigned inliers = tinliers[0];
+      Island best_island = p_islands[0];
+      for (unsigned i = 0; i < p_islands.size(); i++) {
+        if (tinliers[i] > inliers) {
+          inliers = tinliers[i];
+          best_island = p_islands[i];
+        }
+      }
 
       if (inliers > min_inliers_) {
         // LOOP detected
         result->status = LC_DETECTED;
         result->query_id = image_id;
-        result->train_id = best_img;
+        result->train_id = best_island.img_id;
         result->inliers = inliers;
-        last_lc_island_ = island;
+        last_lc_island_ = best_island;
         found = true;
         // Store the last result
         last_lc_result_ = *result;
         consecutive_loops_++;
-        break;
       }
     }
 
