@@ -107,8 +107,7 @@ void LCDetector::process(const unsigned image_id,
   }
 
   // We process the resulting islands according to the previous detections
-  if (last_lc_result_.status != LC_DETECTED &&
-      last_lc_result_.status != LC_TRANSITION) {
+  if (last_lc_result_.status != LC_DETECTED) {
     // We get the best island and try to close a loop with the best image inside
     Island best_island = islands[0];
     unsigned best_img = best_island.img_id;
@@ -148,67 +147,73 @@ void LCDetector::process(const unsigned image_id,
     std::vector<Island> p_islands;
     getPriorIslands(last_lc_island_, islands, &p_islands);
 
-    // We obtain the image matchings, since we need them for compute F
-    // std::unordered_map<unsigned, obindex2::PointMatches> point_matches;
-    // index_->getMatchings(kps, matches, &point_matches);
-
-    // We validate the epipolar geometry against each prior island
-    bool found = false;
-    if (p_islands.size()) {
-      std::vector<unsigned> tinliers(p_islands.size(), 0);
-      #pragma omp parallel for
-      for (unsigned i = 0; i < p_islands.size(); i++) {
-        Island island = p_islands[i];
-        unsigned best_img = island.img_id;
-
-        // Getting the corresponding matchings
-        // obindex2::PointMatches p_matches = point_matches[best_img];
-
-        // unsigned inliers = checkEpipolarGeometry(p_matches.query,
-        //                                          p_matches.train);
-
-        // We obtain the image matchings, since we need them for compute F
-        std::vector<cv::DMatch> tmatches;
-        std::vector<cv::Point2f> tquery;
-        std::vector<cv::Point2f> ttrain;
-        ratioMatchingBF(descs, prev_descs_[best_img], &tmatches);
-        convertPoints(kps, prev_kps_[best_img], tmatches, &tquery, &ttrain);
-        tinliers[i] = checkEpipolarGeometry(tquery, ttrain);
-      }
-
-      unsigned inliers = tinliers[0];
+    if (p_islands.size() > 0 && consecutive_loops_ > min_consecutive_loops_) {
       Island best_island = p_islands[0];
-      for (unsigned i = 0; i < p_islands.size(); i++) {
-        if (tinliers[i] > inliers) {
-          inliers = tinliers[i];
-          best_island = p_islands[i];
+      unsigned best_img = best_island.img_id;
+
+      // LOOP detected
+      result->status = LC_DETECTED;
+      result->query_id = image_id;
+      result->train_id = best_img;
+      result->inliers = -1;
+      last_lc_island_ = best_island;
+      // Store the last result
+      last_lc_result_ = *result;
+      consecutive_loops_++;
+    } else {
+
+      // We obtain the image matchings, since we need them for compute F
+      // std::unordered_map<unsigned, obindex2::PointMatches> point_matches;
+      // index_->getMatchings(kps, matches, &point_matches);
+
+      // We validate the epipolar geometry against each prior island
+      if (p_islands.size()) {
+        std::vector<unsigned> tinliers(p_islands.size(), 0);
+        #pragma omp parallel for
+        for (unsigned i = 0; i < p_islands.size(); i++) {
+          Island island = p_islands[i];
+          unsigned best_img = island.img_id;
+
+          // Getting the corresponding matchings
+          // obindex2::PointMatches p_matches = point_matches[best_img];
+
+          // unsigned inliers = checkEpipolarGeometry(p_matches.query,
+          //                                          p_matches.train);
+
+          // We obtain the image matchings, since we need them for compute F
+          std::vector<cv::DMatch> tmatches;
+          std::vector<cv::Point2f> tquery;
+          std::vector<cv::Point2f> ttrain;
+          ratioMatchingBF(descs, prev_descs_[best_img], &tmatches);
+          convertPoints(kps, prev_kps_[best_img], tmatches, &tquery, &ttrain);
+          tinliers[i] = checkEpipolarGeometry(tquery, ttrain);
         }
-      }
 
-      if (inliers > min_inliers_) {
-        // LOOP detected
-        result->status = LC_DETECTED;
-        result->query_id = image_id;
-        result->train_id = best_island.img_id;
-        result->inliers = inliers;
-        last_lc_island_ = best_island;
-        found = true;
-        // Store the last result
-        last_lc_result_ = *result;
-        consecutive_loops_++;
-      }
-    }
+        unsigned inliers = tinliers[0];
+        Island best_island = p_islands[0];
+        for (unsigned i = 0; i < p_islands.size(); i++) {
+          if (tinliers[i] > inliers) {
+            inliers = tinliers[i];
+            best_island = p_islands[i];
+          }
+        }
 
-    if (!found) {
-      if (image_id - last_lc_result_.query_id > nframes_after_lc_) {
-        result->status = LC_NOT_DETECTED;
-        last_lc_result_.status = LC_NOT_DETECTED;
+        if (inliers > min_inliers_) {
+          // LOOP detected
+          result->status = LC_DETECTED;
+          result->query_id = image_id;
+          result->train_id = best_island.img_id;
+          result->inliers = inliers;
+          last_lc_island_ = best_island;
+          // Store the last result
+          last_lc_result_ = *result;
+          consecutive_loops_++;
+        }
       } else {
-        result->status = LC_TRANSITION;
-        last_lc_result_.status = LC_TRANSITION;
+          result->status = LC_NOT_DETECTED;
+          last_lc_result_.status = LC_NOT_DETECTED;
+          consecutive_loops_ = 0;
       }
-
-      consecutive_loops_ = 0;
     }
   }
 }
