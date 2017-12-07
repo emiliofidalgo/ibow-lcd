@@ -7,11 +7,11 @@
       "purge_descriptors": false,
       "min_feat_apps": 2,
       "p": 70,
-      "min_score": 0.02,
-      "island_size": 4,
-      "min_inliers": 115,
+      "min_score": 0.3,
+      "island_size": 7,
+      "min_inliers": 50,
       "nframes_after_lc": 2,
-      "min_consecutive_loops": 10
+      "min_consecutive_loops": 3
     }
   ]
 }

@@ -94,10 +94,10 @@ void LCDetector::process(const unsigned image_id,
   std::vector<Island> islands;
   buildIslands(image_matches_filt, &islands);
 
-  // std::cout << "Resulting Islands:" << std::endl;
-  // for (unsigned i = 0; i < islands.size(); i++) {
-  //   std::cout << islands[i].toString();
-  // }
+  std::cout << "Resulting Islands:" << std::endl;
+  for (unsigned i = 0; i < islands.size(); i++) {
+    std::cout << islands[i].toString();
+  }
 
   if (!islands.size()) {
     // No resulting islands
@@ -155,7 +155,7 @@ void LCDetector::process(const unsigned image_id,
       result->status = LC_DETECTED;
       result->query_id = image_id;
       result->train_id = best_img;
-      result->inliers = -1;
+      result->inliers = 0;
       last_lc_island_ = best_island;
       // Store the last result
       last_lc_result_ = *result;
