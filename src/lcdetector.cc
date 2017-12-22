@@ -94,11 +94,6 @@ void LCDetector::process(const unsigned image_id,
   std::vector<Island> islands;
   buildIslands(image_matches_filt, &islands);
 
-  std::cout << "Resulting Islands:" << std::endl;
-  for (unsigned i = 0; i < islands.size(); i++) {
-    std::cout << islands[i].toString();
-  }
-
   if (!islands.size()) {
     // No resulting islands
     result->status = LC_NOT_ENOUGH_ISLANDS;
@@ -106,19 +101,29 @@ void LCDetector::process(const unsigned image_id,
     return;
   }
 
-  // We process the resulting islands according to the previous detections
-  if (last_lc_result_.status != LC_DETECTED) {
-    // We get the best island and try to close a loop with the best image inside
-    Island best_island = islands[0];
-    unsigned best_img = best_island.img_id;
+  // std::cout << "Resulting Islands:" << std::endl;
+  // for (unsigned i = 0; i < islands.size(); i++) {
+  //   std::cout << islands[i].toString();
+  // }
 
-    // We obtain the image matchings, since we need them for compute F
-    // std::unordered_map<unsigned, obindex2::PointMatches> point_matches;
-    // index_->getMatchings(kps, matches, &point_matches);
-    // obindex2::PointMatches p_matches = point_matches[best_img];
-    //
-    // unsigned inliers = checkEpipolarGeometry(p_matches.query,
-    // p_matches.train);
+  // Selecting the corresponding island to be processed
+  Island island = islands[0];
+  std::vector<Island> p_islands;
+  getPriorIslands(last_lc_island_, islands, &p_islands);
+  if (p_islands.size()) {
+    island = p_islands[0];
+  }
+
+  if (island.overlaps(last_lc_island_)) {
+    consecutive_loops_++;
+  } else {
+    consecutive_loops_ = 1;
+  }
+  last_lc_island_ = island;
+
+  if (consecutive_loops_ > min_consecutive_loops_) {
+    // Assessing the loop
+    unsigned best_img = island.img_id;
 
     // We obtain the image matchings, since we need them for compute F
     std::vector<cv::DMatch> tmatches;
@@ -131,90 +136,18 @@ void LCDetector::process(const unsigned image_id,
     if (inliers > min_inliers_) {
       // LOOP detected
       result->status = LC_DETECTED;
-      result->query_id = image_id;
       result->train_id = best_img;
       result->inliers = inliers;
-      last_lc_island_ = best_island;
       // Store the last result
       last_lc_result_ = *result;
-      consecutive_loops_ = 1;
     } else {
       result->status = LC_NOT_ENOUGH_INLIERS;
       last_lc_result_.status = LC_NOT_ENOUGH_INLIERS;
     }
+
   } else {
-    // We search for islands similar to the previous one
-    std::vector<Island> p_islands;
-    getPriorIslands(last_lc_island_, islands, &p_islands);
-
-    if (p_islands.size() > 0 && consecutive_loops_ > min_consecutive_loops_) {
-      Island best_island = p_islands[0];
-      unsigned best_img = best_island.img_id;
-
-      // LOOP detected
-      result->status = LC_DETECTED;
-      result->query_id = image_id;
-      result->train_id = best_img;
-      result->inliers = 0;
-      last_lc_island_ = best_island;
-      // Store the last result
-      last_lc_result_ = *result;
-      consecutive_loops_++;
-    } else {
-
-      // We obtain the image matchings, since we need them for compute F
-      // std::unordered_map<unsigned, obindex2::PointMatches> point_matches;
-      // index_->getMatchings(kps, matches, &point_matches);
-
-      // We validate the epipolar geometry against each prior island
-      if (p_islands.size()) {
-        std::vector<unsigned> tinliers(p_islands.size(), 0);
-        #pragma omp parallel for
-        for (unsigned i = 0; i < p_islands.size(); i++) {
-          Island island = p_islands[i];
-          unsigned best_img = island.img_id;
-
-          // Getting the corresponding matchings
-          // obindex2::PointMatches p_matches = point_matches[best_img];
-
-          // unsigned inliers = checkEpipolarGeometry(p_matches.query,
-          //                                          p_matches.train);
-
-          // We obtain the image matchings, since we need them for compute F
-          std::vector<cv::DMatch> tmatches;
-          std::vector<cv::Point2f> tquery;
-          std::vector<cv::Point2f> ttrain;
-          ratioMatchingBF(descs, prev_descs_[best_img], &tmatches);
-          convertPoints(kps, prev_kps_[best_img], tmatches, &tquery, &ttrain);
-          tinliers[i] = checkEpipolarGeometry(tquery, ttrain);
-        }
-
-        unsigned inliers = tinliers[0];
-        Island best_island = p_islands[0];
-        for (unsigned i = 0; i < p_islands.size(); i++) {
-          if (tinliers[i] > inliers) {
-            inliers = tinliers[i];
-            best_island = p_islands[i];
-          }
-        }
-
-        if (inliers > min_inliers_) {
-          // LOOP detected
-          result->status = LC_DETECTED;
-          result->query_id = image_id;
-          result->train_id = best_island.img_id;
-          result->inliers = inliers;
-          last_lc_island_ = best_island;
-          // Store the last result
-          last_lc_result_ = *result;
-          consecutive_loops_++;
-        }
-      } else {
-          result->status = LC_NOT_DETECTED;
-          last_lc_result_.status = LC_NOT_DETECTED;
-          consecutive_loops_ = 0;
-      }
-    }
+    result->status = LC_NOT_DETECTED;
+    last_lc_result_.status = LC_NOT_DETECTED;
   }
 }
 
@@ -350,8 +283,8 @@ unsigned LCDetector::checkEpipolarGeometry(
       cv::findFundamentalMat(
         cv::Mat(query), cv::Mat(train),      // Matching points
         CV_FM_RANSAC,                        // RANSAC method
-        1.0,                                 // Distance to epipolar line
-        0.99,                                // Confidence probability
+        3.0,                                 // Distance to epipolar line
+        0.98,                                // Confidence probability
         inliers);                            // Match status (inlier or outlier)
   }
 
@@ -378,7 +311,7 @@ void LCDetector::ratioMatchingBF(const cv::Mat& query,
 
   // Filtering the resulting matchings according to the given ratio
   for (unsigned m = 0; m < matches12.size(); m++) {
-    if (matches12[m][0].distance <= matches12[m][1].distance * 0.6) {
+    if (matches12[m][0].distance <= matches12[m][1].distance * 0.8) {
       matches->push_back(matches12[m][0]);
     }
   }
