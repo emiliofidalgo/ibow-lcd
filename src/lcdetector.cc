@@ -114,7 +114,7 @@ void LCDetector::process(const unsigned image_id,
     island = p_islands[0];
   }
 
-  if (island.overlaps(last_lc_island_)) {
+  if (island.overlap(last_lc_island_)) {
     consecutive_loops_++;
   } else {
     consecutive_loops_ = 1;
@@ -231,7 +231,7 @@ void LCDetector::buildIslands(
     // We search for the closest island
     bool found = false;
     for (unsigned j = 0; j < islands->size(); j++) {
-      if (islands->at(j).fits(curr_img_id)) {
+      if (islands->at(j).fit(curr_img_id)) {
         islands->at(j).incrementScore(curr_score);
         found = true;
         break;
@@ -268,7 +268,7 @@ void LCDetector::getPriorIslands(
   // We search for overlapping islands
   for (unsigned i = 0; i < islands.size(); i++) {
     Island tisl = islands[i];
-    if (island.overlaps(tisl)) {
+    if (island.overlap(tisl)) {
       p_islands->push_back(tisl);
     }
   }
