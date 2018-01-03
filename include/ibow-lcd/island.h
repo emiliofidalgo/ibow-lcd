@@ -20,6 +20,9 @@
 #ifndef INCLUDE_IBOW_LCD_ISLAND_H_
 #define INCLUDE_IBOW_LCD_ISLAND_H_
 
+#include <cstdio>
+#include <sstream>
+
 namespace ibow_lcd {
 
 struct Island {
@@ -64,7 +67,7 @@ struct Island {
     return ov;
   }
 
-  void adjustLimits(const unsigned image_id, unsigned* min, unsigned* max) {
+  inline void adjustLimits(const unsigned image_id, unsigned* min, unsigned* max) {
     // If the image is to the right of the island
     if (image_id > max_img_id) {
       if (*min <= max_img_id) {
@@ -78,22 +81,22 @@ struct Island {
     }
   }
 
-  void incrementScore(double sc) {
+  inline void incrementScore(double sc) {
     score += sc;
   }
 
-  void normalizeScore() {
+  inline void normalizeScore() {
     score = score / size();
   }
 
-  std::string toString() const {
+  inline std::string toString() const {
     std::stringstream ss;
     ss << "[" << min_img_id << " - " << max_img_id << "] Score: " << score
        << " | Img Id: " << img_id << std::endl;
     return ss.str();
   }
 
-  bool operator<(const Island& island) const { return score > island.score; }
+  inline bool operator<(const Island& island) const { return score > island.score; }
 
   unsigned min_img_id;
   unsigned max_img_id;

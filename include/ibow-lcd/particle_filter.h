@@ -17,53 +17,61 @@
 * along with ibow-lcd. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef INCLUDE_IBOW_LCD_PARTICLE_H_
-#define INCLUDE_IBOW_LCD_PARTICLE_H_
+#ifndef INCLUDE_IBOW_LCD_PARTICLE_FILTER_H_
+#define INCLUDE_IBOW_LCD_PARTICLE_FILTER_H_
 
-#include <cmath>
-#include <cstdio>
-#include <cstdlib>
-#include <sstream>
+#include <string>
+#include <vector>
 
-#include <unordered_map>
-
-#include "ibow-lcd/island.h"
+#include "ibow-lcd/particle.h"
 #include "random.hpp"
 
 using Random = effolkronium::random_static;
 
 namespace ibow_lcd {
 
-class Particle {
+class ParticleFilter {
  public:
   // Constructor
-  Particle();
+  explicit ParticleFilter(unsigned particles = 150,
+                          unsigned island_offset = 5);
+  virtual ~ParticleFilter();
 
   // Methods
-  void move(const int nimages);
-  float evaluate(const Island& tisland);
-  void randomize(const int nimages, const unsigned island_offset = 5);
-  void clearWeights();
+  void init();
+  void process(const std::vector<Island>& islands);
 
   inline std::string toString() const {
     std::stringstream ss;
-    ss << "[" << island.min_img_id << " - " << island.max_img_id <<
-          "] | Img Id: " << island.img_id << " | Weight: " << weight_norm <<
-          std::endl;
+    for (unsigned i = 0; i < num_particles_; i++) {
+      if (i == best_part_) {
+        ss << "* ";
+      }
+      ss << parts_[i].toString();
+    }
     return ss.str();
   }
 
-  bool operator<(const Particle& other) const { return weight > other.weight; }
-
-  // Members
-  Island island;
-  float weight;
-  float weight_norm;
 
  private:
-  unsigned generateRandomMovement();
+  unsigned num_particles_;
+  int num_obs_;
+  unsigned island_offset_;
+  Particle* parts_;
+  Particle* new_parts_;
+  std::vector<float> res_wheel_;
+  unsigned best_part_;
+  float best_weight_;
+  float total_weight_;
+  bool init_;
+
+  void moveParticles();
+  void evaluateParticles(const std::vector<Island>& islands);
+  void normalizeWeights();
+  void resample();
+  Particle getParticleByWeight(float weight);
 };
 
 }  // namespace ibow_lcd
 
-#endif  // INCLUDE_IBOW_LCD_PARTICLE_H_
+#endif  // INCLUDE_IBOW_LCD_PARTICLE_FILTER_H_

@@ -22,33 +22,92 @@
 namespace ibow_lcd {
 
 Particle::Particle() :
-  image_index_(0),
-  weight_(0.0f),
-  norm_weight_(0.0f) {
+  island(0, 0.0, 0, 0),
+  weight(0.0f),
+  weight_norm(0.0f) {
 }
 
-void Particle::move() {
-}
-
-void Particle::evaluate(const std::unordered_map<int, double>& scores) {
-}
-
-double Particle::randomGauss(double variance) {
-  if (variance < 0) {
-    variance = -variance;
+void Particle::move(const int nimages) {
+  // Moving the image index
+  unsigned disp_img_index = generateRandomMovement();
+  island.img_id += disp_img_index;
+  if (island.img_id > static_cast<unsigned>(nimages - 1)) {
+    island.img_id = nimages - 1;
   }
 
-  double x1, x2, w, y1;
+  // Moving the left index
+  unsigned disp_left_index = generateRandomMovement();
+  island.min_img_id += disp_left_index;
+  if (island.min_img_id > static_cast<unsigned>(nimages - 1)) {
+    island.min_img_id = nimages - 1;
+  }
 
-  do {
-    x1 = (2.0f * rand() / RAND_MAX) - 1.0;
-    x2 = (2.0f * rand() / RAND_MAX) - 1.0;
-    w = (x1 * x1) + (x2 * x2);
-  } while ( w >= 1.0 );
+  // Moving the right index
+  unsigned disp_right_index = generateRandomMovement();
+  island.max_img_id += disp_right_index;
+  if (island.max_img_id > static_cast<unsigned>(nimages - 1)) {
+    island.max_img_id = nimages - 1;
+  }
 
-  w = sqrt((-2.0 * log(w)) / w);
-  y1 = x1 * w;
-  return (sqrt(variance) * y1);
+  // Clearing the particle weights
+  clearWeights();
+}
+
+float Particle::evaluate(const Island& tisland) {
+  float response = 0.0f;
+  if (tisland.overlap(island)) {
+    weight += tisland.score;
+    response = tisland.score;
+  }
+  return response;
+}
+
+void Particle::randomize(const int nimages, const unsigned island_offset) {
+  // Selecting a new random image
+  int img_index = Random::get(0, nimages - 1);
+
+  // Compute the limits
+  // Left
+  int left_lim = img_index - island_offset;
+  if (left_lim < 0) {
+    left_lim = 0;
+  }
+
+  // Right
+  int right_lim = img_index + island_offset;
+  if (right_lim > nimages - 1) {
+    right_lim = nimages - 1;
+  }
+
+  // Updating the island
+  island.min_img_id = static_cast<unsigned>(left_lim);
+  island.max_img_id = static_cast<unsigned>(right_lim);
+  island.img_id = static_cast<unsigned>(img_index);
+  island.score = 0.0;
+
+  // Resetting weights
+  clearWeights();
+}
+
+void Particle::clearWeights() {
+  weight = 0.0f;
+  weight_norm = 0.0f;
+}
+
+unsigned Particle::generateRandomMovement() {
+  float rand_val = Random::get(0.0f, 1.0f);
+  unsigned disp;
+  if (rand_val < 0.5) {
+    disp = 0;
+  } else if (rand_val < 0.8) {
+    disp = 1;
+  } else if (rand_val < 0.95) {
+    disp = 2;
+  } else {
+    disp = 3;
+  }
+
+  return disp;
 }
 
 }  // namespace ibow_lcd
