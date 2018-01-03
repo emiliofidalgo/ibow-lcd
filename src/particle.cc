@@ -28,29 +28,30 @@ Particle::Particle() :
 }
 
 void Particle::move(const int nimages) {
-  // Moving the image index
-  unsigned disp_img_index = generateRandomMovement();
-  island.img_id += disp_img_index;
+  // Moving the island indices
+  unsigned disp = generateRandomMovement();
+  island.img_id += disp;
+  island.min_img_id += disp;
+  island.max_img_id += disp;
+
+  // Limiting the new limits of the island
+  // Left index
   if (island.img_id > static_cast<unsigned>(nimages - 1)) {
     island.img_id = nimages - 1;
   }
 
-  // Moving the left index
-  unsigned disp_left_index = generateRandomMovement();
-  island.min_img_id += disp_left_index;
-  if (island.min_img_id > static_cast<unsigned>(nimages - 1)) {
-    island.min_img_id = nimages - 1;
+  if (island.min_img_id > island.img_id) {
+    island.min_img_id = island.img_id;
   }
 
-  // Moving the right index
-  unsigned disp_right_index = generateRandomMovement();
-  island.max_img_id += disp_right_index;
+  // Right index
   if (island.max_img_id > static_cast<unsigned>(nimages - 1)) {
     island.max_img_id = nimages - 1;
   }
 
-  // Clearing the particle weights
-  clearWeights();
+  if (island.max_img_id < island.img_id) {
+    island.max_img_id = island.img_id;
+  }
 }
 
 float Particle::evaluate(const Island& tisland) {

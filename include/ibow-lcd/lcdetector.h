@@ -28,6 +28,7 @@
 #include <vector>
 
 #include "ibow-lcd/island.h"
+#include "ibow-lcd/particle_filter.h"
 #include "obindex2/binary_index.h"
 
 namespace ibow_lcd {
@@ -122,6 +123,9 @@ class LCDetector {
 
   // Image Index
   std::shared_ptr<obindex2::ImageIndex> index_;
+
+  // Particle Filter
+  ParticleFilter pfilter;
 
   // Queues to delay the publication of hypothesis
   std::queue<unsigned> queue_ids_;

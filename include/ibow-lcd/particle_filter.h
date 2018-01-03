@@ -69,6 +69,7 @@ class ParticleFilter {
   void evaluateParticles(const std::vector<Island>& islands);
   void normalizeWeights();
   void resample();
+  void clearWeights();
   Particle getParticleByWeight(float weight);
 };
 

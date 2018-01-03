@@ -56,13 +56,13 @@ struct Island {
 
     bool ov = (b1 <= a1 && a1 <= b2) || (a1 <= b1 && b1 <= a2);
 
-    if (!ov) {
-      int d1 = static_cast<int>(a1) - static_cast<int>(b2);
-      int d2 = static_cast<int>(b1) - static_cast<int>(a2);
-      int gap = (d1 > d2 ? d1 : d2);
+    // if (!ov) {
+    //   int d1 = static_cast<int>(a1) - static_cast<int>(b2);
+    //   int d2 = static_cast<int>(b1) - static_cast<int>(a2);
+    //   int gap = (d1 > d2 ? d1 : d2);
 
-      ov = (gap <= max_d);
-    }
+    //   ov = (gap <= max_d);
+    // }
 
     return ov;
   }

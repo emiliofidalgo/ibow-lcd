@@ -46,12 +46,17 @@ void ParticleFilter::init() {
 }
 
 void ParticleFilter::process(const std::vector<Island>& islands) {
+  num_obs_++;
   if (!init_) {
     init();
     init_ = true;
   } else {
+    clearWeights();
     evaluateParticles(islands);
     normalizeWeights();
+
+    // TODO(emilio) getting result
+
     resample();
     moveParticles();
 
@@ -66,6 +71,7 @@ void ParticleFilter::moveParticles() {
 }
 
 void ParticleFilter::evaluateParticles(const std::vector<Island>& islands) {
+  std::cout << toString() << std::endl;
   best_part_ = 0;
   best_weight_ = 0.0f;
   total_weight_ = 0.0f;
@@ -83,8 +89,24 @@ void ParticleFilter::evaluateParticles(const std::vector<Island>& islands) {
 }
 
 void ParticleFilter::normalizeWeights() {
+  // Setting the normalization factor
+  float factor;
+  bool there_is_weight;
+  if (total_weight_ > 0.0f) {
+    factor = 1.0f / total_weight_;
+    there_is_weight = true;
+  } else {
+    factor = 1.0f / num_particles_;
+    there_is_weight = false;
+  }
+
+  // Setting the normalized weights
   for (unsigned i = 0; i < num_particles_; i++) {
-    parts_[i].weight_norm = parts_[i].weight / total_weight_;
+    if (there_is_weight) {
+      parts_[i].weight_norm = parts_[i].weight * factor;
+    } else {
+      parts_[i].weight_norm = factor;
+    }
 
     // Updating the resampling wheel
     if (i == 0) {
@@ -100,6 +122,7 @@ void ParticleFilter::resample() {
   float step = 1.0f / num_particles_;
   for (unsigned i = 0; i < num_particles_; i++) {
     Particle p = getParticleByWeight(rand_val);
+    std::cout << "Resampling particle: " << p.toString();
     new_parts_[i] = p;
     rand_val += step;
     if (rand_val > 1.0f) {
@@ -107,9 +130,16 @@ void ParticleFilter::resample() {
     }
   }
 
+  // Changing the pointer for pointing to the new set
   Particle* aux = new_parts_;
   new_parts_ = parts_;
   parts_ = aux;
+}
+
+void ParticleFilter::clearWeights() {
+  for (unsigned i = 0; i < num_particles_; i++) {
+    parts_[i].weight = 0.0f;
+  }
 }
 
 Particle ParticleFilter::getParticleByWeight(float weight) {
