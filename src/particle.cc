@@ -28,30 +28,40 @@ Particle::Particle() :
 }
 
 void Particle::move(const int nimages) {
-  // Moving the island indices
-  unsigned disp = generateRandomMovement();
-  island.img_id += disp;
-  island.min_img_id += disp;
-  island.max_img_id += disp;
+  // Moving island's index
+  unsigned disp_img = generateRandomMovementImage();
+  island.img_id += disp_img;
 
-  // Limiting the new limits of the island
-  // Left index
   if (island.img_id > static_cast<unsigned>(nimages - 1)) {
     island.img_id = nimages - 1;
   }
 
-  if (island.min_img_id > island.img_id) {
-    island.min_img_id = island.img_id;
+  // Moving left limit
+  // int disp_left = generateRandomMovementDisp();
+  // int new_idx = static_cast<int>(island.min_img_id + disp_img) + disp_left;
+  // FIXME static islands size!
+  int new_idx = static_cast<int>(island.min_img_id + disp_img);
+
+  if (new_idx < 0) {
+    new_idx = 0;
+  } else if (new_idx > static_cast<int>(island.img_id)) {
+    new_idx = island.img_id;
   }
 
-  // Right index
-  if (island.max_img_id > static_cast<unsigned>(nimages - 1)) {
-    island.max_img_id = nimages - 1;
+  island.min_img_id = static_cast<unsigned>(new_idx);
+
+  // Moving right limit
+  // int disp_right = generateRandomMovementDisp();
+  // new_idx = static_cast<int>(island.max_img_id + disp_img) + disp_right;
+  new_idx = static_cast<int>(island.max_img_id + disp_img);
+
+  if (new_idx > nimages - 1) {
+    new_idx = nimages - 1;
+  } else if (new_idx < static_cast<int>(island.img_id)) {
+    new_idx = island.img_id;
   }
 
-  if (island.max_img_id < island.img_id) {
-    island.max_img_id = island.img_id;
-  }
+  island.max_img_id = static_cast<unsigned>(new_idx);
 }
 
 float Particle::evaluate(const Island& tisland) {
@@ -95,19 +105,35 @@ void Particle::clearWeights() {
   weight_norm = 0.0f;
 }
 
-unsigned Particle::generateRandomMovement() {
+unsigned Particle::generateRandomMovementImage() {
   float rand_val = Random::get(0.0f, 1.0f);
   unsigned disp;
-  if (rand_val < 0.5) {
+  if (rand_val < 0.6f) {
     disp = 0;
-  } else if (rand_val < 0.8) {
+  } else if (rand_val < 0.85f) {
     disp = 1;
-  } else if (rand_val < 0.95) {
+  } else if (rand_val < 0.95f) {
     disp = 2;
   } else {
     disp = 3;
   }
+  return disp;
+}
 
+int Particle::generateRandomMovementDisp() {
+  float rand_val = Random::get(0.0f, 1.0f);
+  int disp;
+  if (rand_val < 0.05f) {
+    disp = -2;
+  } else if (rand_val < 0.15f) {
+    disp = -1;
+  } else if (rand_val < 0.85f) {
+    disp = 0;
+  } else if (rand_val < 0.95f) {
+    disp = 1;
+  } else {
+    disp = 2;
+  }
   return disp;
 }
 

@@ -25,6 +25,7 @@ ParticleFilter::ParticleFilter(unsigned particles, unsigned island_offset) :
     num_particles_(particles),
     num_obs_(0),
     island_offset_(island_offset),
+    neff_(static_cast<float>(num_particles_)),
     res_wheel_(particles, 0.0f),
     best_part_(0),
     best_weight_(0.0f),
@@ -40,28 +41,32 @@ ParticleFilter::~ParticleFilter() {
 }
 
 void ParticleFilter::init() {
+  float weight_norm = 1.0f / num_particles_;
   for (unsigned i = 0; i < num_particles_; i++) {
     parts_[i].randomize(num_obs_, island_offset_);
+    parts_[i].weight = 1.0f;
+    parts_[i].weight_norm = weight_norm;
   }
+  neff_ = static_cast<float>(num_particles_);
 }
 
-void ParticleFilter::process(const std::vector<Island>& islands) {
+void ParticleFilter::filter(const std::vector<Island>& islands) {
   num_obs_++;
   if (!init_) {
     init();
     init_ = true;
   } else {
+    resample();
+    randomize();
+    moveParticles();
     clearWeights();
     evaluateParticles(islands);
     normalizeWeights();
-
-    // TODO(emilio) getting result
-
-    resample();
-    moveParticles();
-
-    // TODO(emilio) randomizing several particles to maintain diversity
   }
+}
+
+Particle ParticleFilter::getBestParticle() {
+  return parts_[best_part_];
 }
 
 void ParticleFilter::moveParticles() {
@@ -71,7 +76,6 @@ void ParticleFilter::moveParticles() {
 }
 
 void ParticleFilter::evaluateParticles(const std::vector<Island>& islands) {
-  std::cout << toString() << std::endl;
   best_part_ = 0;
   best_weight_ = 0.0f;
   total_weight_ = 0.0f;
@@ -100,6 +104,8 @@ void ParticleFilter::normalizeWeights() {
     there_is_weight = false;
   }
 
+  float sum = 0.0f;
+
   // Setting the normalized weights
   for (unsigned i = 0; i < num_particles_; i++) {
     if (there_is_weight) {
@@ -108,12 +114,21 @@ void ParticleFilter::normalizeWeights() {
       parts_[i].weight_norm = factor;
     }
 
+    sum += parts_[i].weight_norm * parts_[i].weight_norm;
+
     // Updating the resampling wheel
     if (i == 0) {
       res_wheel_[0] = parts_[0].weight_norm;
     } else {
       res_wheel_[i] = res_wheel_[i - 1] + parts_[i].weight_norm;
     }
+  }
+
+  // Updating the number of effective particles
+  if (sum > 0.0f) {
+    neff_ = 1.0f / sum;
+  } else {
+    neff_ = 0.0f;
   }
 }
 
@@ -122,8 +137,9 @@ void ParticleFilter::resample() {
   float step = 1.0f / num_particles_;
   for (unsigned i = 0; i < num_particles_; i++) {
     Particle p = getParticleByWeight(rand_val);
-    std::cout << "Resampling particle: " << p.toString();
+    p.weight = step;
     new_parts_[i] = p;
+
     rand_val += step;
     if (rand_val > 1.0f) {
       rand_val -= 1.0f;
@@ -149,6 +165,16 @@ Particle ParticleFilter::getParticleByWeight(float weight) {
     }
   }
   return parts_[0];  // FIXME
+}
+
+void ParticleFilter::randomize(const float alpha) {
+  int nparts = static_cast<int>(num_particles_ * alpha);
+  for (int i = 0; i < nparts; i++) {
+    // Selecting a particle randomly
+    int part = Random::get(0, static_cast<int>(num_particles_) - 1);
+    // Randomizing the corresponding particle
+    parts_[part].randomize(num_obs_, island_offset_);
+  }
 }
 
 }  // namespace ibow_lcd

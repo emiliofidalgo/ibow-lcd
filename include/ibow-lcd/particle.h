@@ -25,6 +25,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <sstream>
+#include <string>
 
 #include <unordered_map>
 
@@ -54,7 +55,9 @@ class Particle {
     return ss.str();
   }
 
-  bool operator<(const Particle& other) const { return weight > other.weight; }
+  inline bool operator<(const Particle& other) const {
+    return weight_norm > other.weight_norm;
+  }
 
   // Members
   Island island;
@@ -62,7 +65,8 @@ class Particle {
   float weight_norm;
 
  private:
-  unsigned generateRandomMovement();
+  unsigned generateRandomMovementImage();
+  int generateRandomMovementDisp();
 };
 
 }  // namespace ibow_lcd

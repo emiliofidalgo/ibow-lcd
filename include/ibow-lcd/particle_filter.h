@@ -39,7 +39,8 @@ class ParticleFilter {
 
   // Methods
   void init();
-  void process(const std::vector<Island>& islands);
+  void filter(const std::vector<Island>& islands);
+  Particle getBestParticle();
 
   inline std::string toString() const {
     std::stringstream ss;
@@ -59,6 +60,7 @@ class ParticleFilter {
   unsigned island_offset_;
   Particle* parts_;
   Particle* new_parts_;
+  float neff_;
   std::vector<float> res_wheel_;
   unsigned best_part_;
   float best_weight_;
@@ -71,6 +73,7 @@ class ParticleFilter {
   void resample();
   void clearWeights();
   Particle getParticleByWeight(float weight);
+  void randomize(const float alpha = 0.25f);
 };
 
 }  // namespace ibow_lcd

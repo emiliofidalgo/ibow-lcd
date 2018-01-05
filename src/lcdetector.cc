@@ -23,7 +23,7 @@ namespace ibow_lcd {
 
 LCDetector::LCDetector(const LCDetectorParams& params) :
       last_lc_island_(-1, 0.0, -1, -1),
-      pfilter(10, 5) {
+      pfilter(150, 5) {
   // Creating the image index
   index_ = std::make_shared<obindex2::ImageIndex>(params.k,
                                                   params.s,
@@ -95,8 +95,8 @@ void LCDetector::process(const unsigned image_id,
   std::vector<Island> islands;
   buildIslands(image_matches_filt, &islands);
 
-  pfilter.process(islands);
-  // std::cout << pfilter.toString() << std::endl;
+  pfilter.filter(islands);
+  std::cout << pfilter.getBestParticle().toString() << std::endl;
 
   if (!islands.size()) {
     // No resulting islands
