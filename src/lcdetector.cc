@@ -92,6 +92,7 @@ void LCDetector::process(const unsigned image_id,
   std::vector<obindex2::ImageMatch> image_matches_filt;
   filterCandidates(image_matches, &image_matches_filt);
 
+  // Building and filtering islands
   std::vector<Island> islands;
   buildIslands(image_matches_filt, &islands);
 

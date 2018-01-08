@@ -76,10 +76,11 @@ void ParticleFilter::moveParticles() {
 }
 
 void ParticleFilter::evaluateParticles(const std::vector<Island>& islands) {
+  int nislands = std::min(static_cast<int>(islands.size()), 20);
   best_part_ = 0;
   best_weight_ = 0.0f;
   total_weight_ = 0.0f;
-  for (unsigned i = 0; i < islands.size(); i++) {
+  for (int i = 0; i < nislands; i++) {
     Island tisland = islands[i];
     for (unsigned j = 0; j < num_particles_; j++) {
       float weight = parts_[j].evaluate(tisland);

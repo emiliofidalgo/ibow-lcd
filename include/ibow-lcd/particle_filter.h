@@ -20,6 +20,7 @@
 #ifndef INCLUDE_IBOW_LCD_PARTICLE_FILTER_H_
 #define INCLUDE_IBOW_LCD_PARTICLE_FILTER_H_
 
+#include <algorithm>
 #include <string>
 #include <vector>
 
