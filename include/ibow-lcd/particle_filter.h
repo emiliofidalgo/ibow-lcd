@@ -63,6 +63,8 @@ class ParticleFilter {
   unsigned island_offset_;
   Particle* parts_;
   Particle* new_parts_;
+  std::vector<Particle> parts_mem_;
+  std::vector<Particle> new_parts_mem_;
   float neff_;
   std::vector<float> res_wheel_;
   unsigned best_part_;
@@ -78,7 +80,7 @@ class ParticleFilter {
   void resample();
   void clearWeights();
   Particle getParticleByWeight(float weight);
-  void randomize(const float alpha = 0.35f);
+  void randomize(const float alpha = 0.2f);
 };
 
 }  // namespace ibow_lcd

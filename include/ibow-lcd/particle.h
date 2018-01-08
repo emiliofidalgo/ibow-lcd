@@ -56,7 +56,7 @@ class Particle {
   }
 
   inline bool operator<(const Particle& other) const {
-    return weight_norm > other.weight_norm;
+    return weight_norm < other.weight_norm;
   }
 
   // Members

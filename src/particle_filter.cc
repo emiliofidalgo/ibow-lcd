@@ -25,6 +25,8 @@ ParticleFilter::ParticleFilter(unsigned particles, unsigned island_offset) :
     num_particles_(particles),
     num_obs_(0),
     island_offset_(island_offset),
+    parts_mem_(num_particles_),
+    new_parts_mem_(num_particles_),
     neff_(static_cast<float>(num_particles_)),
     res_wheel_(particles, 0.0f),
     best_part_(0),
@@ -33,22 +35,27 @@ ParticleFilter::ParticleFilter(unsigned particles, unsigned island_offset) :
     best_weight_img_(0.0f),
     total_weight_(0.0f),
     init_(false) {
-  parts_ = new Particle[num_particles_];
-  new_parts_ = new Particle[num_particles_];
+  parts_ = &(parts_mem_[0]);
+  new_parts_ = &(new_parts_mem_[0]);
 }
 
 ParticleFilter::~ParticleFilter() {
-  delete[] parts_;
-  delete[] new_parts_;
+  // delete[] parts_;
+  // delete[] new_parts_;
 }
 
 void ParticleFilter::init() {
   float weight_norm = 1.0f / num_particles_;
-  #pragma omp parallel for
   for (unsigned i = 0; i < num_particles_; i++) {
     parts_[i].randomize(num_obs_, island_offset_);
     parts_[i].weight = 1.0f;
     parts_[i].weight_norm = weight_norm;
+
+    if (i == 0) {
+      res_wheel_[0] = weight_norm;
+    } else {
+      res_wheel_[i] = res_wheel_[i - 1] + weight_norm;
+    }
   }
   neff_ = static_cast<float>(num_particles_);
 }
@@ -204,12 +211,19 @@ Particle ParticleFilter::getParticleByWeight(float weight) {
 }
 
 void ParticleFilter::randomize(const float alpha) {
+  // Sorting particles
+  if (parts_ == &(parts_mem_[0])) {
+    sort(parts_mem_.begin(), parts_mem_.begin() + num_particles_);
+  } else {
+    sort(new_parts_mem_.begin(), new_parts_mem_.begin() + num_particles_);
+  }
+
   int nparts = static_cast<int>(num_particles_ * alpha);
   for (int i = 0; i < nparts; i++) {
     // Selecting a particle randomly
-    int part = Random::get(0, static_cast<int>(num_particles_) - 1);
+    // int part = Random::get(0, static_cast<int>(num_particles_) - 1);
     // Randomizing the corresponding particle
-    parts_[part].randomize(num_obs_, island_offset_);
+    parts_[i].randomize(num_obs_, island_offset_);
   }
 }
 
