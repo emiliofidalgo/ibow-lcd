@@ -22,6 +22,7 @@
 
 #include <algorithm>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "ibow-lcd/particle.h"
@@ -42,6 +43,7 @@ class ParticleFilter {
   void init();
   void filter(const std::vector<Island>& islands);
   Particle getBestParticle();
+  unsigned getBestImage();
 
   inline std::string toString() const {
     std::stringstream ss;
@@ -64,7 +66,9 @@ class ParticleFilter {
   float neff_;
   std::vector<float> res_wheel_;
   unsigned best_part_;
+  unsigned best_img_;
   float best_weight_;
+  float best_weight_img_;
   float total_weight_;
   bool init_;
 

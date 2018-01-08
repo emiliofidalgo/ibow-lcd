@@ -97,7 +97,7 @@ void LCDetector::process(const unsigned image_id,
   buildIslands(image_matches_filt, &islands);
 
   pfilter.filter(islands);
-  std::cout << pfilter.getBestParticle().toString() << std::endl;
+  std::cout << "Best Image: " << pfilter.getBestImage() << std::endl;
 
   if (!islands.size()) {
     // No resulting islands

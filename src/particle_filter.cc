@@ -28,7 +28,9 @@ ParticleFilter::ParticleFilter(unsigned particles, unsigned island_offset) :
     neff_(static_cast<float>(num_particles_)),
     res_wheel_(particles, 0.0f),
     best_part_(0),
+    best_img_(0),
     best_weight_(0.0f),
+    best_weight_img_(0.0f),
     total_weight_(0.0f),
     init_(false) {
   parts_ = new Particle[num_particles_];
@@ -42,6 +44,7 @@ ParticleFilter::~ParticleFilter() {
 
 void ParticleFilter::init() {
   float weight_norm = 1.0f / num_particles_;
+  #pragma omp parallel for
   for (unsigned i = 0; i < num_particles_; i++) {
     parts_[i].randomize(num_obs_, island_offset_);
     parts_[i].weight = 1.0f;
@@ -69,25 +72,56 @@ Particle ParticleFilter::getBestParticle() {
   return parts_[best_part_];
 }
 
+unsigned ParticleFilter::getBestImage() {
+  return best_img_;
+}
+
 void ParticleFilter::moveParticles() {
+  #pragma omp parallel for
   for (unsigned i = 0; i < num_particles_; i++) {
     parts_[i].move(num_obs_);
   }
 }
 
 void ParticleFilter::evaluateParticles(const std::vector<Island>& islands) {
-  int nislands = std::min(static_cast<int>(islands.size()), 20);
+  // Reinitializing variables
   best_part_ = 0;
   best_weight_ = 0.0f;
+  best_img_ = 0;
+  best_weight_img_ = 0.0f;
   total_weight_ = 0.0f;
+  std::unordered_map<unsigned, float> image_scores;
+
+  // Iterating through islands
+  int nislands = std::min(static_cast<int>(islands.size()), 20);
   for (int i = 0; i < nislands; i++) {
     Island tisland = islands[i];
     for (unsigned j = 0; j < num_particles_; j++) {
       float weight = parts_[j].evaluate(tisland);
       total_weight_ += weight;
+
+      // Computing best particle
       if (parts_[j].weight > best_weight_) {
         best_weight_ = parts_[j].weight;
         best_part_ = j;
+      }
+
+      // Computing best image
+      if (weight > 0.0f) {
+        for (unsigned k = parts_[j].island.min_img_id;
+             k <= parts_[j].island.max_img_id; k++) {
+          if (image_scores.count(k)) {
+            image_scores[k] += weight;
+          } else {
+            image_scores[k] = weight;
+          }
+
+          // Updating best image
+          if (image_scores[k] > best_weight_img_) {
+            best_weight_img_ = image_scores[k];
+            best_img_ = k;
+          }
+        }
       }
     }
   }
@@ -154,6 +188,7 @@ void ParticleFilter::resample() {
 }
 
 void ParticleFilter::clearWeights() {
+  #pragma omp parallel for
   for (unsigned i = 0; i < num_particles_; i++) {
     parts_[i].weight = 0.0f;
   }
