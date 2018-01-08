@@ -108,7 +108,7 @@ void Particle::clearWeights() {
 unsigned Particle::generateRandomMovementImage() {
   float rand_val = Random::get(0.0f, 1.0f);
   unsigned disp;
-  if (rand_val < 0.6f) {
+  if (rand_val < 0.7f) {
     disp = 0;
   } else if (rand_val < 0.85f) {
     disp = 1;

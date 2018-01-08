@@ -78,7 +78,7 @@ class ParticleFilter {
   void resample();
   void clearWeights();
   Particle getParticleByWeight(float weight);
-  void randomize(const float alpha = 0.25f);
+  void randomize(const float alpha = 0.35f);
 };
 
 }  // namespace ibow_lcd
