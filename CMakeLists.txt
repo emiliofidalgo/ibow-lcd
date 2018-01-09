@@ -70,6 +70,7 @@ file(COPY ${JSON}
 ### Targets ###
 # Library
 add_library(lcdetector
+            src/bayes_filter.cc
             src/lcdetector.cc)
 target_link_libraries(lcdetector
                       ${catkin_LIBRARIES}
