@@ -70,6 +70,7 @@ void LCDetector::process(const unsigned image_id,
   queue_ids_.pop();
 
   addImage(newimg_id, prev_kps_[newimg_id], prev_descs_[newimg_id]);
+  bfilter.addImage(newimg_id);
 
   // Searching similar images in the index
   // Matching the descriptors agains the current visual words
@@ -91,64 +92,109 @@ void LCDetector::process(const unsigned image_id,
   std::vector<obindex2::ImageMatch> image_matches_filt;
   filterCandidates(image_matches, &image_matches_filt);
 
-  std::vector<Island> islands;
-  buildIslands(image_matches_filt, &islands);
+  bfilter.predict();
+  bfilter.update(image_matches);
+  std::vector<BayesFilterResult> res;
+  bfilter.getResults(&res);
 
-  if (!islands.size()) {
-    // No resulting islands
-    result->status = LC_NOT_ENOUGH_ISLANDS;
-    last_lc_result_.status = LC_NOT_ENOUGH_ISLANDS;
-    return;
+  // ------------------------------------TMP CODE
+  unsigned best_img;
+  if (res.size()) {
+    best_img = res[0].entry_.first;
+  } else {
+    best_img = 0;
   }
 
-  // std::cout << "Resulting Islands:" << std::endl;
-  // for (unsigned i = 0; i < islands.size(); i++) {
-  //   std::cout << islands[i].toString();
+  // We obtain the image matchings, since we need them for compute F
+  std::vector<cv::DMatch> tmatches;
+  std::vector<cv::Point2f> tquery;
+  std::vector<cv::Point2f> ttrain;
+  ratioMatchingBF(descs, prev_descs_[best_img], &tmatches);
+  convertPoints(kps, prev_kps_[best_img], tmatches, &tquery, &ttrain);
+  unsigned inliers = checkEpipolarGeometry(tquery, ttrain);
+
+  if (inliers > min_inliers_) {
+    // LOOP detected
+    result->status = LC_DETECTED;
+    result->train_id = best_img;
+    result->inliers = inliers;
+    // Store the last result
+    last_lc_result_ = *result;
+  } else {
+    // std::cout << "Not enough inliers with " << best_img << std::endl;
+    result->status = LC_NOT_ENOUGH_INLIERS;
+    last_lc_result_.status = LC_NOT_ENOUGH_INLIERS;
+  }
+  // if (res.size()) {
+  //   std::cout << "Best IMG: " << res[0].entry_.first << std::endl;
+  // }
+  // ---------------------------
+
+  // std::vector<Island> islands;
+  // buildIslands(image_matches_filt, &islands);
+
+  // if (!islands.size()) {
+  //   // No resulting islands
+  //   result->status = LC_NOT_ENOUGH_ISLANDS;
+  //   last_lc_result_.status = LC_NOT_ENOUGH_ISLANDS;
+  //   return;
   // }
 
-  // Selecting the corresponding island to be processed
-  Island island = islands[0];
-  std::vector<Island> p_islands;
-  getPriorIslands(last_lc_island_, islands, &p_islands);
-  if (p_islands.size()) {
-    island = p_islands[0];
-  }
+  // // std::cout << "Resulting Islands:" << std::endl;
+  // // for (unsigned i = 0; i < islands.size(); i++) {
+  // //   std::cout << islands[i].toString();
+  // // }
 
-  if (island.overlaps(last_lc_island_)) {
-    consecutive_loops_++;
-  } else {
-    consecutive_loops_ = 1;
-  }
-  last_lc_island_ = island;
+  // // Selecting the corresponding island to be processed
+  // Island island = islands[0];
+  // std::vector<Island> p_islands;
+  // getPriorIslands(last_lc_island_, islands, &p_islands);
+  // if (p_islands.size()) {
+  //   island = p_islands[0];
+  // }
 
-  if (consecutive_loops_ > min_consecutive_loops_) {
-    // Assessing the loop
-    unsigned best_img = island.img_id;
+  // if (island.overlaps(last_lc_island_)) {
+  //   consecutive_loops_++;
+  // } else {
+  //   consecutive_loops_ = 1;
+  // }
+  // last_lc_island_ = island;
 
-    // We obtain the image matchings, since we need them for compute F
-    std::vector<cv::DMatch> tmatches;
-    std::vector<cv::Point2f> tquery;
-    std::vector<cv::Point2f> ttrain;
-    ratioMatchingBF(descs, prev_descs_[best_img], &tmatches);
-    convertPoints(kps, prev_kps_[best_img], tmatches, &tquery, &ttrain);
-    unsigned inliers = checkEpipolarGeometry(tquery, ttrain);
+  // if (consecutive_loops_ > min_consecutive_loops_) {
+  //   // Assessing the loop
+  //   // unsigned best_img = island.img_id;
+  //   unsigned best_img;
+  //   if (res.size()) {
+  //     best_img = res[0].entry_.first;
+  //   } else {
+  //     best_img = island.img_id;
+  //   }
 
-    if (inliers > min_inliers_) {
-      // LOOP detected
-      result->status = LC_DETECTED;
-      result->train_id = best_img;
-      result->inliers = inliers;
-      // Store the last result
-      last_lc_result_ = *result;
-    } else {
-      result->status = LC_NOT_ENOUGH_INLIERS;
-      last_lc_result_.status = LC_NOT_ENOUGH_INLIERS;
-    }
+  //   // We obtain the image matchings, since we need them for compute F
+  //   std::vector<cv::DMatch> tmatches;
+  //   std::vector<cv::Point2f> tquery;
+  //   std::vector<cv::Point2f> ttrain;
+  //   ratioMatchingBF(descs, prev_descs_[best_img], &tmatches);
+  //   convertPoints(kps, prev_kps_[best_img], tmatches, &tquery, &ttrain);
+  //   unsigned inliers = checkEpipolarGeometry(tquery, ttrain);
 
-  } else {
-    result->status = LC_NOT_DETECTED;
-    last_lc_result_.status = LC_NOT_DETECTED;
-  }
+  //   if (inliers > min_inliers_) {
+  //     // LOOP detected
+  //     result->status = LC_DETECTED;
+  //     result->train_id = best_img;
+  //     result->inliers = inliers;
+  //     // Store the last result
+  //     last_lc_result_ = *result;
+  //   } else {
+  //     // std::cout << "Not enough inliers with " << best_img << std::endl;
+  //     result->status = LC_NOT_ENOUGH_INLIERS;
+  //     last_lc_result_.status = LC_NOT_ENOUGH_INLIERS;
+  //   }
+
+  // } else {
+  //   result->status = LC_NOT_DETECTED;
+  //   last_lc_result_.status = LC_NOT_DETECTED;
+  // }
 }
 
 void LCDetector::addImage(const unsigned image_id,

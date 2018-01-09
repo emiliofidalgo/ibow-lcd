@@ -27,6 +27,7 @@
 #include <sstream>
 #include <vector>
 
+#include "ibow-lcd/bayes_filter.h"
 #include "obindex2/binary_index.h"
 
 namespace ibow_lcd {
@@ -190,6 +191,9 @@ class LCDetector {
 
   // Image Index
   std::shared_ptr<obindex2::ImageIndex> index_;
+
+  // Bayes filter
+  BayesFilter bfilter;
 
   // Queues to delay the publication of hypothesis
   std::queue<unsigned> queue_ids_;
