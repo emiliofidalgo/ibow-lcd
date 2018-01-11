@@ -61,6 +61,8 @@ void LCDetector::process(const unsigned image_id,
   // Assessing if, at least, p images have arrived
   if (queue_ids_.size() < p_) {
     result->status = LC_NOT_ENOUGH_IMAGES;
+    result->train_id = 0;
+    result->inliers = 0;
     last_lc_result_.status = LC_NOT_ENOUGH_IMAGES;
     return;
   }
@@ -97,6 +99,8 @@ void LCDetector::process(const unsigned image_id,
   if (!islands.size()) {
     // No resulting islands
     result->status = LC_NOT_ENOUGH_ISLANDS;
+    result->train_id = 0;
+    result->inliers = 0;
     last_lc_result_.status = LC_NOT_ENOUGH_ISLANDS;
     return;
   }
@@ -142,6 +146,8 @@ void LCDetector::process(const unsigned image_id,
       last_lc_result_ = *result;
     } else {
       result->status = LC_NOT_ENOUGH_INLIERS;
+      result->train_id = best_img;
+      result->inliers = inliers;
       last_lc_result_.status = LC_NOT_ENOUGH_INLIERS;
     }
 

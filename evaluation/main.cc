@@ -156,12 +156,8 @@ int main(int argc, char** argv) {
       ibow_lcd::LCDetectorResult result = results[j];
       output_file << result.query_id << "\t";
       output_file << result.status << "\t";
-      if (result.status == ibow_lcd::LC_DETECTED) {
-        output_file << result.train_id << "\t";
-        output_file << result.inliers;
-      } else {
-        output_file << -1 << "\t" << -1;
-      }
+      output_file << result.train_id << "\t";
+      output_file << result.inliers;
       output_file << std::endl;
     }
     output_file.close();
