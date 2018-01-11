@@ -1,9 +1,13 @@
-function [precision, recall] = compute_PR(loops_file, gt_file, gt_neigh)
+function [precision, recall] = compute_PR(loops_file, gt_file, gt_neigh, compensate)
     % Given a resulting loop and a ground truth files, this function 
     % computes the corresponding precision / recall values
     
     if nargin < 3
         gt_neigh = 10;
+    end
+    
+    if nargin < 4
+        compensate = 1;
     end
     
     % Loading files
@@ -48,16 +52,18 @@ function [precision, recall] = compute_PR(loops_file, gt_file, gt_neigh)
             classified(1, i) = 0;
             
             % We compensate the fact that the GT has been manually labelled
-            nprevimgs = 3;
-            if i > nprevimgs
-                for j=1:nprevimgs
-                    minval = train_id - 2;
-                    maxval = train_id + 2;
-                    if loops(i - j, 2) == 4 && loops(i - j, 3) > minval && loops(i - j, 3) < maxval
-                        if classified(1, i - j) == 2
-                            TN = TN - 1;
-                        elseif classified(1, i - j) == 3
-                            FN = FN - 1;
+            if compensate
+                nprevimgs = 3;
+                if i > nprevimgs
+                    for j=1:nprevimgs
+                        minval = train_id - 2;
+                        maxval = train_id + 2;
+                        if loops(i - j, 2) == 4 && loops(i - j, 3) > minval && loops(i - j, 3) < maxval
+                            if classified(1, i - j) == 2
+                                TN = TN - 1;
+                            elseif classified(1, i - j) == 3
+                                FN = FN - 1;
+                            end
                         end
                     end
                 end
