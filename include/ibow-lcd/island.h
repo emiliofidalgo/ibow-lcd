@@ -21,6 +21,7 @@
 #define INCLUDE_IBOW_LCD_ISLAND_H_
 
 #include <string>
+#include <sstream>
 
 namespace ibow_lcd {
 
