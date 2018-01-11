@@ -100,7 +100,7 @@ int main(int argc, char** argv) {
   std::vector<cv::Mat> descs;
 
   std::cout << "Describing images ..." << std::endl;
-  cv::Ptr<cv::Feature2D> detector = cv::ORB::create(1000);  // Default params
+  cv::Ptr<cv::Feature2D> detector = cv::ORB::create(1500);  // Default params
 
   // Processing the sequence of images
   for (unsigned i = 0; i < nimages; i++) {
