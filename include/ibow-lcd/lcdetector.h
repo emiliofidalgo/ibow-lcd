@@ -47,7 +47,7 @@ struct LCDetectorParams {
     island_size(7),
     min_inliers(22),
     nframes_after_lc(3),
-    min_consecutive_loops(0) {}
+    min_consecutive_loops(5) {}
 
   // Image index params
   unsigned k;  // Branching factor for the image index
