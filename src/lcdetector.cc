@@ -61,6 +61,8 @@ void LCDetector::process(const unsigned image_id,
   // Assessing if, at least, p images have arrived
   if (queue_ids_.size() < p_) {
     result->status = LC_NOT_ENOUGH_IMAGES;
+    result->train_id = 0;
+    result->inliers = 0;
     last_lc_result_.status = LC_NOT_ENOUGH_IMAGES;
     return;
   }
@@ -97,6 +99,8 @@ void LCDetector::process(const unsigned image_id,
   if (!islands.size()) {
     // No resulting islands
     result->status = LC_NOT_ENOUGH_ISLANDS;
+    result->train_id = 0;
+    result->inliers = 0;
     last_lc_result_.status = LC_NOT_ENOUGH_ISLANDS;
     return;
   }
@@ -114,17 +118,27 @@ void LCDetector::process(const unsigned image_id,
     island = p_islands[0];
   }
 
-  if (island.overlaps(last_lc_island_)) {
-    consecutive_loops_++;
-  } else {
-    consecutive_loops_ = 1;
-  }
+  bool overlap = island.overlaps(last_lc_island_);
   last_lc_island_ = island;
 
-  if (consecutive_loops_ > min_consecutive_loops_) {
-    // Assessing the loop
-    unsigned best_img = island.img_id;
+  // if () {
+  //   consecutive_loops_++;
+  // } else {
+  //   consecutive_loops_ = 1;
+  // }
 
+  unsigned best_img = island.img_id;
+
+  // Assessing the loop
+  if (consecutive_loops_ > min_consecutive_loops_ && overlap) {
+    // LOOP can be considered as detected
+    result->status = LC_DETECTED;
+    result->train_id = best_img;
+    result->inliers = 0;
+    // Store the last result
+    last_lc_result_ = *result;
+    consecutive_loops_++;
+  } else {
     // We obtain the image matchings, since we need them for compute F
     std::vector<cv::DMatch> tmatches;
     std::vector<cv::Point2f> tquery;
@@ -140,15 +154,19 @@ void LCDetector::process(const unsigned image_id,
       result->inliers = inliers;
       // Store the last result
       last_lc_result_ = *result;
+      consecutive_loops_++;
     } else {
       result->status = LC_NOT_ENOUGH_INLIERS;
+      result->train_id = best_img;
+      result->inliers = inliers;
       last_lc_result_.status = LC_NOT_ENOUGH_INLIERS;
+      consecutive_loops_ = 0;
     }
-
-  } else {
-    result->status = LC_NOT_DETECTED;
-    last_lc_result_.status = LC_NOT_DETECTED;
   }
+  // else {
+  //   result->status = LC_NOT_DETECTED;
+  //   last_lc_result_.status = LC_NOT_DETECTED;
+  // }
 }
 
 void LCDetector::addImage(const unsigned image_id,
@@ -283,8 +301,8 @@ unsigned LCDetector::checkEpipolarGeometry(
       cv::findFundamentalMat(
         cv::Mat(query), cv::Mat(train),      // Matching points
         CV_FM_RANSAC,                        // RANSAC method
-        3.0,                                 // Distance to epipolar line
-        0.98,                                // Confidence probability
+        1.0,                                 // Distance to epipolar line
+        0.9985,                              // Confidence probability
         inliers);                            // Match status (inlier or outlier)
   }
 

@@ -27,78 +27,10 @@
 #include <sstream>
 #include <vector>
 
+#include "ibow-lcd/island.h"
 #include "obindex2/binary_index.h"
 
 namespace ibow_lcd {
-
-// Island
-struct Island {
-  explicit Island(unsigned image_id,
-                  double sc,
-                  unsigned min_img,
-                  unsigned max_img) :
-        min_img_id(min_img),
-        max_img_id(max_img),
-        img_id(image_id),
-        score(sc) {}
-
-  unsigned size() {
-    return max_img_id - min_img_id + 1;
-  }
-
-  bool fits(unsigned image_id) {
-    bool response = false;
-    if (image_id >= min_img_id && image_id <= max_img_id) {
-      response = true;
-    }
-    return response;
-  }
-
-  bool overlaps(const Island& island) const {
-    unsigned a1 = min_img_id;
-    unsigned a2 = max_img_id;
-    unsigned b1 = island.min_img_id;
-    unsigned b2 = island.max_img_id;
-
-    return (b1 <= a1 && a1 <= b2) || (a1 <= b1 && b1 <= a2);
-  }
-
-  void adjustLimits(const unsigned image_id, unsigned* min, unsigned* max) {
-    // If the image is to the right of the island
-    if (image_id > max_img_id) {
-      if (*min <= max_img_id) {
-        *min = max_img_id + 1;
-      }
-    } else {
-      // Otherwise, the image is to the left of the island
-      if (*max >= min_img_id) {
-        *max = min_img_id - 1;
-      }
-    }
-  }
-
-  void incrementScore(double sc) {
-    score += sc;
-  }
-
-  void normalizeScore() {
-    score = score / size();
-  }
-
-  std::string toString() const {
-    std::stringstream ss;
-    ss << "[" << min_img_id << " - " << max_img_id << "] Score: " << score
-       << " | Img Id: " << img_id << std::endl;
-    return ss.str();
-  }
-
-  bool operator<(const Island& island) const { return score > island.score; }
-
-  unsigned min_img_id;
-  unsigned max_img_id;
-  unsigned img_id;
-  double score;
-};
 
 // LCDetectorParams
 struct LCDetectorParams {
@@ -115,7 +47,7 @@ struct LCDetectorParams {
     island_size(7),
     min_inliers(22),
     nframes_after_lc(3),
-    min_consecutive_loops(0) {}
+    min_consecutive_loops(5) {}
 
   // Image index params
   unsigned k;  // Branching factor for the image index
