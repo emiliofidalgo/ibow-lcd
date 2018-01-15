@@ -329,7 +329,7 @@ void LCDetector::ratioMatchingBF(const cv::Mat& query,
 
   // Filtering the resulting matchings according to the given ratio
   for (unsigned m = 0; m < matches12.size(); m++) {
-    if (matches12[m][0].distance <= matches12[m][1].distance * 0.8) {
+    if (matches12[m][0].distance <= matches12[m][1].distance * 0.6) {
       matches->push_back(matches12[m][0]);
     }
   }
