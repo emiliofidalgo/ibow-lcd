@@ -11,8 +11,10 @@ function [precision, recall] = compute_PR(loops_file, gt_file, gt_neigh, compens
     end
     
     % Loading files
-    loops  = load(loops_file);
-    gtruth = load(gt_file);
+    %loops  = load(loops_file);
+    %gtruth = load(gt_file);
+    loops  = loops_file;
+    gtruth = gt_file;
     
     % Defining general counters
     TP = 0; % True Positives

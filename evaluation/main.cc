@@ -84,11 +84,13 @@ int main(int argc, char** argv) {
   std::cout << "Working directory ready" << std::endl;
 
   // Storing information about the dataset
-  std::string info_filename = results_dir + config_name + "/info.txt";
+  std::string info_filename = results_dir + config_name + "/info.json";
   std::ofstream info_file(info_filename);
-  info_file << base_dir << "images/" << std::endl;
-  info_file << base_dir << "groundtruth.mat" << std::endl;
-  info_file << base_dir << "imageCoords.mat" << std::endl;
+  json info_json;
+  info_json["img_dir"] = base_dir + "images/";
+  info_json["gt_file"] = base_dir + "groundtruth.mat";
+  info_json["coords_file"] = base_dir + "imageCoords.mat";
+  info_file << std::setw(4) << info_json << std::endl;
   info_file.close();
 
   // Loading image filenames
