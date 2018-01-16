@@ -33,6 +33,9 @@ LCDetector::LCDetector(const LCDetectorParams& params) :
   // Storing the remaining parameters
   p_ = params.p;
   nndr_ = params.nndr;
+  nndr_bf_ = params.nndr_bf;
+  ep_dist_ = params.ep_dist;
+  conf_prob_ = params.conf_prob;
   min_score_ = params.min_score;
   island_size_ = params.island_size;
   island_offset_ = island_size_ / 2;
@@ -169,6 +172,117 @@ void LCDetector::process(const unsigned image_id,
   // }
 }
 
+void LCDetector::debug(const unsigned image_id,
+             const std::vector<cv::KeyPoint>& kps,
+             const cv::Mat& descs,
+             std::ofstream& out_file) {
+  auto start = std::chrono::steady_clock::now();
+  // Storing the keypoints and descriptors
+  prev_kps_.push_back(kps);
+  prev_descs_.push_back(descs);
+
+  // Adding the current image to the queue to be added in the future
+  queue_ids_.push(image_id);
+
+  // Assessing if, at least, p images have arrived
+  if (queue_ids_.size() < p_) {
+    auto end = std::chrono::steady_clock::now();
+    auto diff = end - start;
+    out_file << 0 << "\t";  // min_id
+    out_file << 0 << "\t";  // max_id
+    out_file << 0 << "\t";  // img_id
+    out_file << 0 << "\t";  // overlap
+    out_file << 0 << "\t";  // Inliers
+    out_file << index_->numDescriptors() << "\t";  // Voc. Size
+    out_file << std::chrono::duration<double, std::milli>(diff).count() << "\t";  // Time
+    out_file << std::endl;
+    return;
+  }
+
+  // Adding new hypothesis
+  unsigned newimg_id = queue_ids_.front();
+  queue_ids_.pop();
+
+  addImage(newimg_id, prev_kps_[newimg_id], prev_descs_[newimg_id]);
+
+  // Searching similar images in the index
+  // Matching the descriptors agains the current visual words
+  std::vector<std::vector<cv::DMatch> > matches_feats;
+
+  // Searching the query descriptors against the features
+  index_->searchDescriptors(descs, &matches_feats, 2, 64);
+
+  // Filtering matches according to the ratio test
+  std::vector<cv::DMatch> matches;
+  filterMatches(matches_feats, &matches);
+
+  std::vector<obindex2::ImageMatch> image_matches;
+
+  // We look for similar images according to the filtered matches found
+  index_->searchImages(descs, matches, &image_matches, true);
+
+  // Filtering the resulting image matchings
+  std::vector<obindex2::ImageMatch> image_matches_filt;
+  filterCandidates(image_matches, &image_matches_filt);
+
+  std::vector<Island> islands;
+  buildIslands(image_matches_filt, &islands);
+
+  if (!islands.size()) {
+    // No resulting islands
+    auto end = std::chrono::steady_clock::now();
+    auto diff = end - start;
+    out_file << 0 << "\t";  // min_id
+    out_file << 0 << "\t";  // max_id
+    out_file << 0 << "\t";  // img_id
+    out_file << 0 << "\t";  // overlap
+    out_file << 0 << "\t";  // Inliers
+    out_file << index_->numDescriptors() << "\t";  // Voc. Size
+    out_file << std::chrono::duration<double, std::milli>(diff).count() << "\t";  // Time
+    out_file << std::endl;
+    return;
+  }
+
+  // std::cout << "Resulting Islands:" << std::endl;
+  // for (unsigned i = 0; i < islands.size(); i++) {
+  //   std::cout << islands[i].toString();
+  // }
+
+  // Selecting the corresponding island to be processed
+  Island island = islands[0];
+  std::vector<Island> p_islands;
+  getPriorIslands(last_lc_island_, islands, &p_islands);
+  if (p_islands.size()) {
+    island = p_islands[0];
+  }
+
+  bool overlap = island.overlaps(last_lc_island_);
+  last_lc_island_ = island;
+
+  unsigned best_img = island.img_id;
+
+  // We obtain the image matchings, since we need them for compute F
+  std::vector<cv::DMatch> tmatches;
+  std::vector<cv::Point2f> tquery;
+  std::vector<cv::Point2f> ttrain;
+  ratioMatchingBF(descs, prev_descs_[best_img], &tmatches);
+  convertPoints(kps, prev_kps_[best_img], tmatches, &tquery, &ttrain);
+  unsigned inliers = checkEpipolarGeometry(tquery, ttrain);
+
+  auto end = std::chrono::steady_clock::now();
+  auto diff = end - start;
+
+  // Writing results
+  out_file << island.min_img_id << "\t";          // min_id
+  out_file << island.max_img_id << "\t";          // max_id
+  out_file << best_img << "\t";                   // img_id
+  out_file << overlap << "\t";                    // overlap
+  out_file << inliers << "\t";                    // Inliers
+  out_file << index_->numDescriptors() << "\t";   // Voc. Size
+  out_file << std::chrono::duration<double, std::milli>(diff).count() << "\t";  // Time
+  out_file << std::endl;
+}
+
 void LCDetector::addImage(const unsigned image_id,
                           const std::vector<cv::KeyPoint>& kps,
                           const cv::Mat& descs) {
@@ -301,8 +415,8 @@ unsigned LCDetector::checkEpipolarGeometry(
       cv::findFundamentalMat(
         cv::Mat(query), cv::Mat(train),      // Matching points
         CV_FM_RANSAC,                        // RANSAC method
-        1.0,                                 // Distance to epipolar line
-        0.9985,                              // Confidence probability
+        ep_dist_,                                 // Distance to epipolar line
+        conf_prob_,                              // Confidence probability
         inliers);                            // Match status (inlier or outlier)
   }
 
@@ -329,7 +443,7 @@ void LCDetector::ratioMatchingBF(const cv::Mat& query,
 
   // Filtering the resulting matchings according to the given ratio
   for (unsigned m = 0; m < matches12.size(); m++) {
-    if (matches12[m][0].distance <= matches12[m][1].distance * 0.6) {
+    if (matches12[m][0].distance <= matches12[m][1].distance * nndr_bf_) {
       matches->push_back(matches12[m][0]);
     }
   }

@@ -2,6 +2,7 @@
   "config_name": "CityCentre_4",
   "base_dir": "/datasets/CityCentre/",
   "results_dir": "/home/emilio/Escritorio/ibow-lcd/",
+  "debug": true,
   "executions" : [
     {
       "purge_descriptors": true,

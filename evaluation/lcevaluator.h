@@ -21,6 +21,7 @@
 #define EVALUATION_LCEVALUATOR_H_
 
 #include <iostream>
+#include <fstream>
 #include <vector>
 
 #include <boost/filesystem.hpp>
@@ -41,6 +42,11 @@ class LCEvaluator {
     const std::vector<std::vector<cv::KeyPoint> >& kps,
     const std::vector<cv::Mat>& descs,
     std::vector<LCDetectorResult>* results);
+  void detectLoops(
+    const std::vector<unsigned>& image_ids,
+    const std::vector<std::vector<cv::KeyPoint> >& kps,
+    const std::vector<cv::Mat>& descs,
+    std::ofstream& out_file);
 
   inline void setIndexParams(const LCDetectorParams& params) {
     index_params_ = params;

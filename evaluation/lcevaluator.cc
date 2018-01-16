@@ -51,4 +51,20 @@ void LCEvaluator::detectLoops(
   }
 }
 
+void LCEvaluator::detectLoops(
+    const std::vector<unsigned>& image_ids,
+    const std::vector<std::vector<cv::KeyPoint> >& kps,
+    const std::vector<cv::Mat>& descs,
+    std::ofstream& out_file) {
+  unsigned nimages = image_ids.size();
+
+  // Creating the loop closure detector object
+  ibow_lcd::LCDetector lcdet(index_params_);
+
+  // Processing the sequence of images
+  for (unsigned i = 0; i < nimages; i++) {
+    lcdet.debug(image_ids[i], kps[i], descs[i], out_file);
+  }
+}
+
 }  // namespace ibow_lcd

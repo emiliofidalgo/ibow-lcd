@@ -73,6 +73,9 @@ int main(int argc, char** argv) {
   std::string results_dir = js["results_dir"];
   std::cout << "Results directory: " << results_dir << std::endl;
 
+  bool debug = js["debug"];
+  std::cout << "Debug: " << std::boolalpha << debug << std::endl;
+
   // Preparing working directory
   std::cout << "Preparing working directory ..." << std::endl;
   boost::filesystem::path res_dir = results_dir + config_name;
@@ -130,6 +133,10 @@ int main(int argc, char** argv) {
     ibow_lcd::LCDetectorParams params;
     params.purge_descriptors = js["executions"][i]["purge_descriptors"];
     params.min_feat_apps = js["executions"][i]["min_feat_apps"];
+    params.nndr = js["executions"][i]["nndr"];
+    params.nndr_bf = js["executions"][i]["nndr_bf"];
+    params.ep_dist = js["executions"][i]["ep_dist"];
+    params.conf_prob = js["executions"][i]["conf_prob"];
     params.p = js["executions"][i]["p"];
     params.min_score = js["executions"][i]["min_score"];
     params.island_size = js["executions"][i]["island_size"];
@@ -140,27 +147,39 @@ int main(int argc, char** argv) {
     // Configuring the evaluator
     eval.setIndexParams(params);
 
-    // Executing the process
-    std::vector<ibow_lcd::LCDetectorResult> results;
-    eval.detectLoops(image_ids, kps, descs, &results);
+    if (debug) {
+      // Writing the results to a file
+      char output_filename[500];
+      sprintf(output_filename, "%s%s/loops_%03d.txt",
+                                              results_dir.c_str(),
+                                              config_name.c_str(),
+                                              i);
+      std::ofstream output_file(output_filename);
+      eval.detectLoops(image_ids, kps, descs, output_file);
+      output_file.close();
+    } else {
+      // Executing the process
+      std::vector<ibow_lcd::LCDetectorResult> results;
+      eval.detectLoops(image_ids, kps, descs, &results);
 
-    // Writing the results to a file
-    char output_filename[500];
-    sprintf(output_filename, "%s%s/loops_%03d.txt",
-                                            results_dir.c_str(),
-                                            config_name.c_str(),
-                                            i);
+      // Writing the results to a file
+      char output_filename[500];
+      sprintf(output_filename, "%s%s/loops_%03d.txt",
+                                              results_dir.c_str(),
+                                              config_name.c_str(),
+                                              i);
 
-    std::ofstream output_file(output_filename);
-    for (unsigned j = 0; j < results.size(); j++) {
-      ibow_lcd::LCDetectorResult result = results[j];
-      output_file << result.query_id << "\t";
-      output_file << result.status << "\t";
-      output_file << result.train_id << "\t";
-      output_file << result.inliers;
-      output_file << std::endl;
+      std::ofstream output_file(output_filename);
+      for (unsigned j = 0; j < results.size(); j++) {
+        ibow_lcd::LCDetectorResult result = results[j];
+        output_file << result.query_id << "\t";
+        output_file << result.status << "\t";
+        output_file << result.train_id << "\t";
+        output_file << result.inliers;
+        output_file << std::endl;
+      }
+      output_file.close();
     }
-    output_file.close();
   }
 
   std::cout << "Evaluation finished" << std::endl;

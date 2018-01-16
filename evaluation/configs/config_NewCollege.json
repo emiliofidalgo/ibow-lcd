@@ -2,6 +2,7 @@
   "config_name": "NewCollege",
   "base_dir": "/datasets/NewCollege/",
   "results_dir": "/home/emilio/Escritorio/ibow-lcd/",
+  "debug": true,
   "executions" : [
     {
       "purge_descriptors": true,

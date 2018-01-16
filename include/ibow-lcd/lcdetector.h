@@ -21,6 +21,9 @@
 #define INCLUDE_IBOW_LCD_LCDETECTOR_H_
 
 #include <algorithm>
+#include <chrono>
+#include <fstream>
+#include <iostream>
 #include <queue>
 #include <memory>
 #include <string>
@@ -42,7 +45,10 @@ struct LCDetectorParams {
     purge_descriptors(true),
     min_feat_apps(2),
     p(250),
-    nndr(0.8),
+    nndr(0.8f),
+    nndr_bf(0.8f),
+    ep_dist(2.0),
+    conf_prob(0.985),
     min_score(0.3),
     island_size(7),
     min_inliers(22),
@@ -60,6 +66,9 @@ struct LCDetectorParams {
   // Loop Closure Params
   unsigned p;  // Previous images to be discarded when searching for a loop
   float nndr;  // Nearest neighbour distance ratio
+  float nndr_bf;  // NNDR when matching with brute force
+  double ep_dist;  // Distance to epipolar lines
+  double conf_prob;  // Confidence probability
   double min_score;  // Min score to consider an image matching as correct
   unsigned island_size;  // Max number of images of an island
   unsigned min_inliers;  // Minimum number of inliers to consider a loop
@@ -103,11 +112,18 @@ class LCDetector {
                const std::vector<cv::KeyPoint>& kps,
                const cv::Mat& descs,
                LCDetectorResult* result);
+  void debug(const unsigned image_id,
+             const std::vector<cv::KeyPoint>& kps,
+             const cv::Mat& descs,
+             std::ofstream& out_file);
 
  private:
   // Parameters
   unsigned p_;
   float nndr_;
+  float nndr_bf_;
+  double ep_dist_;
+  double conf_prob_;
   double min_score_;
   unsigned island_size_;
   unsigned island_offset_;
