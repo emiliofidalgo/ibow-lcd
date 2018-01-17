@@ -92,6 +92,6 @@ function [PR, imgvssize, imgvstime] = process(directory, gt_neigh, compensate)
         
         % Images vs Time
         imgvstime.img(i) = i;
-        imgvstime.size(i) = loops_file(i, 7);
+        imgvstime.time(i) = loops_file(i, 7);
     end
 end
