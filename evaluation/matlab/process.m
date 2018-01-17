@@ -1,6 +1,15 @@
-function process(directory, prev, cons_loops, inliers)
+function process(directory, gt_neigh, compensate)
+
+    % Establishing default parameters
+    if nargin < 2
+        gt_neigh = 20;
+        compensate = false;
+    elseif nargin == 2
+        compensate = false;
+    end   
+
     % Getting dataset information and loading files
-    loops_filename = strcat(directory, 'loops_000.txt');
+    loops_filename = strcat(directory, 'loops.txt');
     loops_file = load(loops_filename);
     
     % Reading info file    
@@ -18,8 +27,13 @@ function process(directory, prev, cons_loops, inliers)
     % Coordinate file    
     coords_filename = json_info.coords_file;
     %coords_file = load(coords_filename);
+    
+    % Reading parameters
+    prev = json_info.p;
+    cons_loops = json_info.min_consecutive_loops;
+    inliers = json_info.min_inliers;
 
     % Processing the resulting file to transform the format
     loops_trans_file = detect_loops(loops_file, prev, cons_loops, inliers);
-    compute_PR(loops_trans_file, gt_file, 10, false);
+    compute_PR(loops_trans_file, gt_file, gt_neigh, compensate, false);
 end

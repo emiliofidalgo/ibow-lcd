@@ -1,20 +1,15 @@
-function [precision, recall] = compute_PR(loops_file, gt_file, gt_neigh, compensate)
+function [precision, recall] = compute_PR(loops_file, gt_file, gt_neigh, compensate, load_files)
     % Given a resulting loop and a ground truth files, this function 
-    % computes the corresponding precision / recall values
-    
-    if nargin < 3
-        gt_neigh = 10;
-    end
-    
-    if nargin < 4
-        compensate = 1;
-    end
+    % computes the corresponding precision / recall values  
     
     % Loading files
-    %loops  = load(loops_file);
-    %gtruth = load(gt_file);
-    loops  = loops_file;
-    gtruth = gt_file;
+    if load_files
+        loops  = load(loops_file);
+        gtruth = load(gt_file);
+    else
+        loops  = loops_file;
+        gtruth = gt_file;
+    end
     
     % Defining general counters
     TP = 0; % True Positives

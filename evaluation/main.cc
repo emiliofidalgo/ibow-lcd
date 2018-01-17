@@ -90,6 +90,15 @@ int main(int argc, char** argv) {
   info_json["img_dir"] = base_dir + "images/";
   info_json["gt_file"] = base_dir + "groundtruth.mat";
   info_json["coords_file"] = base_dir + "imageCoords.mat";
+
+  // Optional parameters
+  if (debug) {
+    info_json["p"] = js["p"];
+    info_json["min_consecutive_loops"] = js["min_consecutive_loops"];
+    info_json["min_inliers"] = js["min_inliers"];
+  }
+
+  // Writing information to the info file
   info_file << std::setw(4) << info_json << std::endl;
   info_file.close();
 
@@ -127,40 +136,58 @@ int main(int argc, char** argv) {
 
   // Executing the corresponding steps
   ibow_lcd::LCEvaluator eval;
-  unsigned nsteps = js["executions"].size();
-  for (unsigned i = 0; i < nsteps; i++) {
-    std::cout << "Execution " << i << std::endl;
 
-    // Reading the current configuration
+  if (debug) {
+    std::cout << "Execution in DEBUG mode ..." << std::endl;
+
+    // Obtaining parameters
     ibow_lcd::LCDetectorParams params;
-    params.purge_descriptors = js["executions"][i]["purge_descriptors"];
-    params.min_feat_apps = js["executions"][i]["min_feat_apps"];
-    params.nndr = js["executions"][i]["nndr"];
-    params.nndr_bf = js["executions"][i]["nndr_bf"];
-    params.ep_dist = js["executions"][i]["ep_dist"];
-    params.conf_prob = js["executions"][i]["conf_prob"];
-    params.p = js["executions"][i]["p"];
-    params.min_score = js["executions"][i]["min_score"];
-    params.island_size = js["executions"][i]["island_size"];
-    params.min_inliers = js["executions"][i]["min_inliers"];
-    params.nframes_after_lc = js["executions"][i]["nframes_after_lc"];
-    params.min_consecutive_loops = js["executions"][i]["min_consecutive_loops"];
+    params.purge_descriptors = js["purge_descriptors"];
+    params.min_feat_apps = js["min_feat_apps"];
+    params.nndr = js["nndr"];
+    params.nndr_bf = js["nndr_bf"];
+    params.ep_dist = js["ep_dist"];
+    params.conf_prob = js["conf_prob"];
+    params.p = js["p"];
+    params.min_score = js["min_score"];
+    params.island_size = js["island_size"];
+    params.min_inliers = js["min_inliers"];
+    params.nframes_after_lc = js["nframes_after_lc"];
+    params.min_consecutive_loops = js["min_consecutive_loops"];
 
-    // Configuring the evaluator
     eval.setIndexParams(params);
 
-    if (debug) {
-      // Writing the results to a file
-      char output_filename[500];
-      sprintf(output_filename, "%s%s/loops_%03d.txt",
-                                              results_dir.c_str(),
-                                              config_name.c_str(),
-                                              i);
-      std::ofstream output_file(output_filename);
-      eval.detectLoops(image_ids, kps, descs, output_file);
-      output_file.close();
-    } else {
-      // Executing the process
+    // Writing the results to a file
+    char output_filename[500];
+    sprintf(output_filename, "%s%s/loops.txt", results_dir.c_str(),
+                                               config_name.c_str());
+    std::ofstream output_file(output_filename);
+    eval.detectLoops(image_ids, kps, descs, output_file);
+    output_file.close();
+  } else {
+    unsigned nsteps = js["executions"].size();
+    for (unsigned i = 0; i < nsteps; i++) {
+      std::cout << "Execution " << i << std::endl;
+
+      // Reading the current configuration
+      ibow_lcd::LCDetectorParams params;
+      params.purge_descriptors = js["executions"][i]["purge_descriptors"];
+      params.min_feat_apps = js["executions"][i]["min_feat_apps"];
+      params.nndr = js["executions"][i]["nndr"];
+      params.nndr_bf = js["executions"][i]["nndr_bf"];
+      params.ep_dist = js["executions"][i]["ep_dist"];
+      params.conf_prob = js["executions"][i]["conf_prob"];
+      params.p = js["executions"][i]["p"];
+      params.min_score = js["executions"][i]["min_score"];
+      params.island_size = js["executions"][i]["island_size"];
+      params.min_inliers = js["executions"][i]["min_inliers"];
+      params.nframes_after_lc = js["executions"][i]["nframes_after_lc"];
+      params.min_consecutive_loops = js["executions"][i]["min_consecutive_loops"];
+
+      // Configuring the evaluator
+      eval.setIndexParams(params);
+
+        // Executing the process
       std::vector<ibow_lcd::LCDetectorResult> results;
       eval.detectLoops(image_ids, kps, descs, &results);
 
