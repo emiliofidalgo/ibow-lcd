@@ -39,7 +39,7 @@ function [PR, imgvssize, imgvstime] = process(directory, gt_neigh, compensate)
     P_max = 0.0;
     R_max = 0.0;
     I_max = 0;
-    for i=12:300
+    for i=1:500
         % Processing the resulting file to transform the format
         loops_trans_file = detect_loops(loops_file, prev, cons_loops, i);
         [Pr, Re] = compute_PR(loops_trans_file, gt_file, gt_neigh, compensate, false);
@@ -62,18 +62,20 @@ function [PR, imgvssize, imgvstime] = process(directory, gt_neigh, compensate)
     P = P_a;
     
     % Filtering resulting points
-    P_a = [P(1)];
-    R_a = [R(1)];
-    for i=2:numel(P)
-        if P(i) <= P_a(end)
-            P_a = [P_a, P(i)];
-            R_a = [R_a, R(i)];
-        end
-    end
+%     P_a = [P(1)];
+%     R_a = [R(1)];
+%     for i=2:numel(P)
+%         if P(i) <= P_a(end)
+%             P_a = [P_a, P(i)];
+%             R_a = [R_a, R(i)];
+%         end
+%     end
     
     % Returning the information for P/R
-    PR.P = P_a;
-    PR.R = R_a;
+%    PR.P = P_a;
+%    PR.R = R_a;
+    PR.P = P;
+    PR.R = R;
     PR.P_max = P_max;
     PR.R_max = R_max;
     PR.I_max = I_max;
