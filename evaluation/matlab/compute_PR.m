@@ -78,14 +78,14 @@ function [precision, recall] = compute_PR(loops_file, gt_file, gt_neigh, compens
     end
     
     % Printing final results.
-    disp(['TP: ', int2str(TP)]);
-    disp(['FP: ', int2str(FP)]);
-    disp(['TN: ', int2str(TN)]);
-    disp(['FN: ', int2str(FN)]);
+    %disp(['TP: ', int2str(TP)]);
+    %disp(['FP: ', int2str(FP)]);
+    %disp(['TN: ', int2str(TN)]);
+    %disp(['FN: ', int2str(FN)]);
     
     % Computing the Precision/Recall final values.
     precision = TP / (TP + FP);
     recall = TP / (TP + FN);
     
-    disp(['P/R: ', num2str(precision), ' / ', num2str(recall)]);
+    %disp(['P/R: ', num2str(precision), ' / ', num2str(recall)]);
 end
