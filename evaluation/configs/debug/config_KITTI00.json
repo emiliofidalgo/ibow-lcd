@@ -7,12 +7,12 @@
   "min_feat_apps": 2,
   "nndr": 0.8,
   "nndr_bf": 0.6,
-  "ep_dist": 1.0,
-  "conf_prob": 0.99,
+  "ep_dist": 2.0,
+  "conf_prob": 0.985,
   "p": 50,
-  "min_score": 0.6,
+  "min_score": 0.1,
   "island_size": 11,
   "min_inliers": 40,
   "nframes_after_lc": 3,
-  "min_consecutive_loops": 25
+  "min_consecutive_loops": 70
 }
