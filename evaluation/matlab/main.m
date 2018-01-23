@@ -1,6 +1,6 @@
 % Script for obtaining the required results for IROS'18
 base_dir = '/home/emilio/Escritorio/ibow-lcd/';
-gt_neigh = 10;
+gt_neigh = 40;
 compensate = false;
 
 % Configuring subpaths
