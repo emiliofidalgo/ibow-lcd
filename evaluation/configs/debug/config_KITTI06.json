@@ -6,13 +6,13 @@
   "purge_descriptors": true,
   "min_feat_apps": 2,
   "nndr": 0.8,
-  "nndr_bf": 0.6,
-  "ep_dist": 1.0,
-  "conf_prob": 0.99,
+  "nndr_bf": 0.25,
+  "ep_dist": 0.005,
+  "conf_prob": 0.999,
   "p": 50,
-  "min_score": 0.5,
-  "island_size": 11,
+  "min_score": 0.7,
+  "island_size": 3,
   "min_inliers": 40,
   "nframes_after_lc": 3,
-  "min_consecutive_loops": 70
+  "min_consecutive_loops": 2
 }
