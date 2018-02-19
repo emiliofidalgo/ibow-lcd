@@ -16,7 +16,17 @@ The details of the algorithm are explained in the following publication:
 
 **iBoW-LCD: An Appearance-based Loop Closure Detection Approach using Incremental Bags of Binary Words**<br/>
 Emilio Garcia-Fidalgo and Alberto Ortiz<br/>
-Submitted to IEEE RA-L and IROS 2018
+Submitted to IEEE RA-L and IROS 2018<br/>
+
+A preprinted version can be found [here](https://arxiv.org/abs/1802.05909). If you use this code, please cite:
+```
+@misc{Garcia-Fidalgo2018,
+Author = {Emilio Garcia-Fidalgo and Alberto Ortiz},
+Title = {{iBoW-LCD: An Appearance-based Loop Closure Detection Approach using Incremental Bags of Binary Words}},
+Year = {2018},
+Eprint = {arXiv:1802.05909}
+}
+```
 
 # Installation
 
