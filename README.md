@@ -12,19 +12,24 @@ iBoW-LCD is distributed under the terms of the [GPL3 License](http://github.com/
 
 # Related publication
 
-The details of the algorithm are explained in the following publication:
+The details of the algorithm are explained in the [following publication](http://ieeexplore.ieee.org/document/8392377/):
 
 **iBoW-LCD: An Appearance-based Loop Closure Detection Approach using Incremental Bags of Binary Words**<br/>
 Emilio Garcia-Fidalgo and Alberto Ortiz<br/>
-Submitted to IEEE RA-L and IROS 2018<br/>
+IEEE Robotics and Automation Letters, Vol. 3, No. 4, Pgs. 3051-3057 (Oct. 2018)<br/>
 
-A preprinted version can be found [here](https://arxiv.org/abs/1802.05909). If you use this code, please cite:
+A preprint can be found [here](https://arxiv.org/abs/1802.05909). If you use this code, please cite:
 ```
-@misc{Garcia-Fidalgo2018,
-Author = {Emilio Garcia-Fidalgo and Alberto Ortiz},
-Title = {{iBoW-LCD: An Appearance-based Loop Closure Detection Approach using Incremental Bags of Binary Words}},
-Year = {2018},
-Eprint = {arXiv:1802.05909}
+@article{Garcia-Fidalgo2018, 
+  author={Emilio Garcia-Fidalgo and Alberto Ortiz}, 
+  journal={IEEE Robotics and Automation Letters}, 
+  title={iBoW-LCD: An Appearance-Based Loop-Closure Detection Approach Using Incremental Bags of Binary Words}, 
+  year={2018}, 
+  volume={3}, 
+  number={4}, 
+  pages={3051-3057}, 
+  doi={10.1109/LRA.2018.2849609}, 
+  month={Oct}
 }
 ```
 
