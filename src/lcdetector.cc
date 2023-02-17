@@ -414,7 +414,7 @@ unsigned LCDetector::checkEpipolarGeometry(
     cv::Mat F =
       cv::findFundamentalMat(
         cv::Mat(query), cv::Mat(train),      // Matching points
-        CV_FM_RANSAC,                        // RANSAC method
+        cv::FM_RANSAC,                        // RANSAC method
         ep_dist_,                                 // Distance to epipolar line
         conf_prob_,                              // Confidence probability
         inliers);                            // Match status (inlier or outlier)
